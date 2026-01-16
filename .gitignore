@@ -5,3 +5,4 @@
 */__pycache__/
 __pycache__/
 .specstory/
+.gpu_monitor_config

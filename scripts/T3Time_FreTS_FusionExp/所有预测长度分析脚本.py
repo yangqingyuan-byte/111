@@ -126,6 +126,94 @@ def find_best_params_by_pred_len(results, pred_lens=[96, 192, 336, 720]):
     
     return results_by_pred_len
 
+def get_available_datasets(result_file=None, model_id_prefix="T3Time_FreTS_Gated_Qwen_Hyperopt"):
+    """
+    从日志文件中提取所有可用的数据集
+    
+    Args:
+        result_file: 结果文件路径，默认为 experiment_results.log
+        model_id_prefix: 模型ID前缀
+    
+    Returns:
+        list: 可用数据集列表，按字母顺序排序
+    """
+    if result_file is None:
+        result_file = os.path.join(project_root, "experiment_results.log")
+    
+    datasets = set()
+    
+    if not os.path.exists(result_file):
+        return []
+    
+    with open(result_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.strip():
+                continue
+            try:
+                data = json.loads(line.strip())
+                # 检查是否是参数寻优实验结果
+                if not data.get('model_id', '').startswith(model_id_prefix):
+                    continue
+                
+                # 提取数据集名称
+                data_path = data.get('data_path', data.get('data'))
+                if data_path:
+                    datasets.add(data_path)
+            except (json.JSONDecodeError, Exception):
+                continue
+    
+    return sorted(list(datasets))
+
+def interactive_select_dataset(result_file=None, model_id_prefix="T3Time_FreTS_Gated_Qwen_Hyperopt"):
+    """
+    交互式选择数据集
+    
+    Args:
+        result_file: 结果文件路径
+        model_id_prefix: 模型ID前缀
+    
+    Returns:
+        str: 用户选择的数据集名称，如果用户取消则返回 None
+    """
+    datasets = get_available_datasets(result_file, model_id_prefix)
+    
+    if not datasets:
+        print("\n❌ 未找到任何可用的数据集")
+        return None
+    
+    print("\n" + "="*80)
+    print("📊 请选择要分析的数据集")
+    print("="*80)
+    print("\n可用的数据集:")
+    print("-"*80)
+    
+    for idx, dataset in enumerate(datasets, 1):
+        print(f"  [{idx}] {dataset}")
+    
+    print(f"  [0] 取消")
+    print("-"*80)
+    
+    while True:
+        try:
+            choice = input("\n请输入选项编号 (0-{}): ".format(len(datasets))).strip()
+            
+            if choice == '0':
+                print("已取消选择")
+                return None
+            
+            choice_num = int(choice)
+            if 1 <= choice_num <= len(datasets):
+                selected = datasets[choice_num - 1]
+                print(f"\n✓ 已选择数据集: {selected}")
+                return selected
+            else:
+                print(f"❌ 无效的选项，请输入 0-{len(datasets)} 之间的数字")
+        except ValueError:
+            print("❌ 请输入有效的数字")
+        except KeyboardInterrupt:
+            print("\n\n已取消选择")
+            return None
+
 def get_seed_statistics(results):
     """统计所有结果的种子分布"""
     seed_counts = defaultdict(int)
@@ -139,10 +227,12 @@ def get_seed_statistics(results):
     
     return seed_counts, seed_by_pred_len
 
-def print_results_by_pred_len(results_by_pred_len, pred_lens=[96, 192, 336, 720], all_results=None):
+def print_results_by_pred_len(results_by_pred_len, pred_lens=[96, 192, 336, 720], all_results=None, data_path=None):
     """按预测长度打印结果"""
     print("="*80)
     print("T3Time_FreTS_Gated_Qwen 参数寻优结果分析（所有种子）")
+    if data_path:
+        print(f"数据集: {data_path}")
     print("按预测长度分别分析: {}".format(", ".join(map(str, pred_lens))))
     print("="*80)
     
@@ -468,10 +558,12 @@ def print_single_pred_len_results(best_mse, best_mae, sorted_results_mse, sorted
         print(f"最大 MAE:    {best_stats_mae['mae_max']:.6f}")
         print(f"实验次数:    {best_stats_mae['count']}")
 
-def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
+def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720], data_path=None):
     """打印所有预测长度的汇总表格"""
     print("\n" + "="*80)
     print("📊 所有预测长度的最佳结果汇总（跨所有种子）")
+    if data_path:
+        print(f"数据集: {data_path}")
     print("="*80)
     
     # MSE 汇总（添加综合均值）
@@ -565,16 +657,27 @@ def main():
     parser.add_argument('--pred_lens', type=int, nargs='+',
                         default=[96, 192, 336, 720],
                         help='要分析的预测长度列表（默认: 96 192 336 720）')
-    parser.add_argument('--data_path', type=str, default='ETTh1',
-                        help='数据集名称（默认: ETTh1；例如: ETTh1, ETTh2, ETTm1, ETTm2）')
+    parser.add_argument('--data_path', type=str, default=None,
+                        help='数据集名称（默认: None，将显示交互式菜单选择；例如: ETTh1, ETTh2, ETTm1, ETTm2）')
     
     args = parser.parse_args()
+    
+    # 如果未指定数据集，则显示交互式菜单
+    data_path = args.data_path
+    if data_path is None:
+        data_path = interactive_select_dataset(
+            result_file=args.result_file,
+            model_id_prefix=args.model_id_prefix
+        )
+        if data_path is None:
+            print("\n程序已退出")
+            return
     
     results = load_hyperopt_results(
         result_file=args.result_file,
         seed=args.seed,
         model_id_prefix=args.model_id_prefix,
-        data_path=args.data_path,
+        data_path=data_path,
     )
     
     if not results:
@@ -589,10 +692,10 @@ def main():
     results_by_pred_len = find_best_params_by_pred_len(results, args.pred_lens)
     
     # 打印汇总表格
-    print_summary_table(results_by_pred_len, args.pred_lens)
+    print_summary_table(results_by_pred_len, args.pred_lens, data_path=data_path)
     
     # 打印每个预测长度的详细结果（传入所有结果用于种子统计）
-    # print_results_by_pred_len(results_by_pred_len, args.pred_lens, all_results=results)
+    # print_results_by_pred_len(results_by_pred_len, args.pred_lens, all_results=results, data_path=data_path)
     
     # print("\n" + "="*80)
     # print("分析完成！")

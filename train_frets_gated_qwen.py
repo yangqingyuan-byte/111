@@ -32,7 +32,6 @@ def data_provider(args, flag):
         flag=flag,
         size=[args.seq_len, 0, args.pred_len],
         features='M',
-        num_nodes=args.num_nodes,
         scale=True,
         embed_version=args.embed_version
     )

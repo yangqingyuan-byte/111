@@ -1,0 +1,99 @@
+================================================================================
+          T3Time_FreTS_Gated_Qwen 网络架构图 (简洁版)
+================================================================================
+
+输入:
+  input_data: [B, L, N]          embeddings: [B, d_llm, N, 1]
+  └─→ RevIN Norm ─→ [B, N, L]    └─→ Reshape ─→ [B, N, d_llm]
+
+                    ┌─────────────────┬─────────────────┐
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+            ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+            │   时域分支     │  │   频域分支     │  │  Prompt编码    │
+            ├───────────────┤  ├───────────────┤  ├───────────────┤
+            │ [B, N, L]     │  │ [B, N, L]     │  │ [B, N, d_llm]  │
+            │   ↓           │  │   ↓           │  │   ↓           │
+            │ Linear        │  │ Reshape       │  │ GatedTrans    │
+            │ L→C           │  │ →[B*N,L,1]    │  │ ×e_layer      │
+            │   ↓           │  │   ↓           │  │   ↓           │
+            │ [B, N, C]     │  │ Linear 1→C    │  │ [B, N, d_llm]  │
+            │   ↓           │  │   ↓           │  │   ↓           │
+            │ GatedTrans    │  │ FreTS Comp    │  │ →[B,d_llm,N]   │
+            │ ×e_layer      │  │ (FFT→MLP→IFFT)│  │ prompt_feat   │
+            │   ↓           │  │   ↓           │  │               │
+            │ time_encoded  │  │ AttentionPool │  │               │
+            │ [B, N, C]     │  │   ↓           │  │               │
+            └───────────────┘  │ [B, N, C]     │  │               │
+                               │   ↓           │  │               │
+                               │ GatedTrans    │  │               │
+                               │   ↓           │  │               │
+                               │ fre_encoded   │  │               │
+                               │ [B, N, C]     │  │               │
+                               └───────────────┘  └───────────────┘
+                    │                 │                 │
+                    └─────────┬───────┴─────────────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │   Gate 融合机制      │
+                    ├─────────────────────┤
+                    │ Concat + MLP        │
+                    │ gate = Sigmoid(...) │
+                    │ fused = time +     │
+                    │        gate * fre   │
+                    │ [B, C, N]          │
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │   CMA (4个Head)     │
+                    ├─────────────────────┤
+                    │ CrossModal × 4      │
+                    │   ↓                 │
+                    │ AdaptiveFusion      │
+                    │   ↓                 │
+                    │ Residual:           │
+                    │ α*fused_cma +       │
+                    │ (1-α)*fused         │
+                    │ [B, N, C]          │
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │   解码器 (Decoder)   │
+                    ├─────────────────────┤
+                    │ TransformerDecoder  │
+                    │ ×d_layer            │
+                    │   ↓                 │
+                    │ Linear C→pred_len   │
+                    │ [B, N, pred_len]    │
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  RevIN 反归一化     │
+                    ├─────────────────────┤
+                    │ Denormalize         │
+                    │ [B, N, pred_len]    │
+                    └─────────────────────┘
+                              │
+                              ▼
+                        输出 (Output)
+
+================================================================================
+关键组件:
+================================================================================
+1. RevIN: 可逆实例归一化 (Normalize)
+2. 时域分支: Linear + GatedTransformerEncoder
+3. 频域分支: FreTS Component (FFT → 可学习MLP → IFFT)
+4. Gate融合: Horizon-Aware Gate (考虑预测长度)
+5. CMA: Cross-Modal Alignment (4个并行Head + 自适应融合)
+6. Decoder: TransformerDecoder + Linear投影
+
+维度说明:
+  B: Batch size
+  L: Sequence length (seq_len)
+  N: Number of nodes (num_nodes)
+  C: Channel dimension (channel)
+  d_llm: LLM embedding dim (1024)
+  pred_len: Prediction length

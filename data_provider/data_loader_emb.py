@@ -182,8 +182,8 @@ class Dataset_ETT_minute(Dataset):
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path,
-                                          self.data_path))
+        # self.data_path 已经在 __init__ 中包含了完整路径（第172行），直接使用
+        df_raw = pd.read_csv(self.data_path)
 
         border1s = [0, 12*30*24*4 - self.seq_len, 12*30*24*4+4*30*24*4 - self.seq_len]
         border2s = [12*30*24*4, 12*30*24*4+4*30*24*4, 12*30*24*4+8*30*24*4]
