@@ -130,11 +130,11 @@ class Dataset_ETT_minute(Dataset):
         self.freq = freq
         
         self.root_path = root_path
-        self.data_path = data_path
-
+        # 统一将 data_path 处理为 csv 文件名（不含目录），并拼到 root_path 下
+        data_path_file = os.path.splitext(os.path.basename(data_path))[0]
         if not data_path.endswith('.csv'):
-            data_path_file = data_path
-            data_path += '.csv' 
+            data_path = data_path + '.csv'
+        data_path = os.path.basename(data_path)
         self.data_path = os.path.join(root_path, data_path)
         self.data_path_file = data_path_file
 
@@ -142,8 +142,8 @@ class Dataset_ETT_minute(Dataset):
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path,
-                                          self.data_path))
+        # self.data_path 已经包含 root_path，避免重复拼接导致 ./dataset/./dataset/xxx.csv
+        df_raw = pd.read_csv(self.data_path)
 
         border1s = [0, 12*30*24*4 - self.seq_len, 12*30*24*4+4*30*24*4 - self.seq_len]
         border2s = [12*30*24*4, 12*30*24*4+4*30*24*4, 12*30*24*4+8*30*24*4]
@@ -206,7 +206,7 @@ class Dataset_ETT_minute(Dataset):
         return self.scaler.inverse_transform(data)
 
 class Dataset_Custom(Dataset):
-    def __init__(self, root_path="/mnt/d/Monaf/Personal/Time_series_forecasting/T3Time/dataset/", flag='train', size=None,
+    def __init__(self, root_path="./dataset/", flag='train', size=None,
                  features='M', data_path='ECL',
                  target='OT', scale=False, timeenc=0, freq='h',patch_len=16,percent=100):
         # size [seq_len, label_len, pred_len]
@@ -233,11 +233,11 @@ class Dataset_Custom(Dataset):
         self.freq = freq
 
         self.root_path = root_path
-        self.data_path = data_path
-
+        # 统一将 data_path 处理为 csv 文件名（不含目录），并拼到 root_path 下
+        data_path_file = os.path.splitext(os.path.basename(data_path))[0]
         if not data_path.endswith('.csv'):
-            data_path_file = data_path
-            data_path += '.csv' 
+            data_path = data_path + '.csv'
+        data_path = os.path.basename(data_path)
         self.data_path = os.path.join(root_path, data_path)
         self.data_path_file = data_path_file
 
@@ -245,8 +245,8 @@ class Dataset_Custom(Dataset):
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path,
-                                          self.data_path))
+        # self.data_path 已经包含 root_path，避免重复拼接导致 ./dataset/./dataset/xxx.csv
+        df_raw = pd.read_csv(self.data_path)
 
         '''
         df_raw.columns: ['date', ...(other features), target feature]
