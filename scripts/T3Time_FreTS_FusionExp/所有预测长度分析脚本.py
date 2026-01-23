@@ -9,6 +9,7 @@ import json
 import os
 import sys
 from collections import defaultdict
+from datetime import datetime
 
 # 添加项目根目录到 Python 路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -640,6 +641,100 @@ def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720], data
         print(f"{'综合均值':<12} {'':<8} {'':<10} {'':<10} {'':<8} {'':<12} {'':<12} {'':<8} "
               f"{mse_avg_mae:<15.6f} {mae_avg_mae:<15.6f}")
 
+def export_best_configs_to_json(results_by_pred_len, pred_lens=[96, 192, 336, 720], data_path=None, output_file=None):
+    """
+    导出最佳MSE和最佳MAE的配置到JSON文件
+    
+    Args:
+        results_by_pred_len: 按预测长度分组的结果
+        pred_lens: 预测长度列表
+        data_path: 数据集名称
+        output_file: 输出文件路径，如果为None则自动生成
+    """
+    if output_file is None:
+        if data_path:
+            output_file = f"best_configs_{data_path}.json"
+        else:
+            output_file = "best_configs.json"
+    
+    best_configs = {
+        "dataset": data_path,
+        "export_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "best_mse_configs": [],
+        "best_mae_configs": []
+    }
+    
+    # 收集最佳MSE配置
+    for pred_len in pred_lens:
+        data = results_by_pred_len.get(pred_len, {})
+        best_mse = data.get('best_mse')
+        if best_mse:
+            config = {
+                "pred_len": pred_len,
+                "seed": best_mse.get('seed'),
+                "channel": best_mse.get('channel'),
+                "dropout_n": best_mse.get('dropout_n'),
+                "head": best_mse.get('head'),
+                "e_layer": best_mse.get('e_layer'),
+                "d_layer": best_mse.get('d_layer'),
+                "learning_rate": best_mse.get('learning_rate'),
+                "weight_decay": best_mse.get('weight_decay'),
+                "batch_size": best_mse.get('batch_size'),
+                "seq_len": best_mse.get('seq_len'),
+                "loss_fn": best_mse.get('loss_fn'),
+                "lradj": best_mse.get('lradj'),
+                "embed_version": best_mse.get('embed_version'),
+                "epochs": best_mse.get('epochs'),
+                "patience": best_mse.get('patience'),
+                "test_mse": best_mse.get('test_mse'),
+                "test_mae": best_mse.get('test_mae'),
+                "timestamp": best_mse.get('timestamp'),
+                "model_id": best_mse.get('model_id')
+            }
+            best_configs["best_mse_configs"].append(config)
+    
+    # 收集最佳MAE配置
+    for pred_len in pred_lens:
+        data = results_by_pred_len.get(pred_len, {})
+        best_mae = data.get('best_mae')
+        if best_mae:
+            config = {
+                "pred_len": pred_len,
+                "seed": best_mae.get('seed'),
+                "channel": best_mae.get('channel'),
+                "dropout_n": best_mae.get('dropout_n'),
+                "head": best_mae.get('head'),
+                "e_layer": best_mae.get('e_layer'),
+                "d_layer": best_mae.get('d_layer'),
+                "learning_rate": best_mae.get('learning_rate'),
+                "weight_decay": best_mae.get('weight_decay'),
+                "batch_size": best_mae.get('batch_size'),
+                "seq_len": best_mae.get('seq_len'),
+                "loss_fn": best_mae.get('loss_fn'),
+                "lradj": best_mae.get('lradj'),
+                "embed_version": best_mae.get('embed_version'),
+                "epochs": best_mae.get('epochs'),
+                "patience": best_mae.get('patience'),
+                "test_mse": best_mae.get('test_mse'),
+                "test_mae": best_mae.get('test_mae'),
+                "timestamp": best_mae.get('timestamp'),
+                "model_id": best_mae.get('model_id')
+            }
+            best_configs["best_mae_configs"].append(config)
+    
+    # 保存到JSON文件
+    output_path = os.path.join(project_root, output_file)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(best_configs, f, ensure_ascii=False, indent=2)
+    
+    print("\n" + "="*80)
+    print(f"✅ 最佳配置已导出到: {output_path}")
+    print(f"   - 最佳MSE配置数量: {len(best_configs['best_mse_configs'])}")
+    print(f"   - 最佳MAE配置数量: {len(best_configs['best_mae_configs'])}")
+    print("="*80)
+    
+    return output_path
+
 def main():
     """主函数"""
     import argparse
@@ -693,6 +788,9 @@ def main():
     
     # 打印汇总表格
     print_summary_table(results_by_pred_len, args.pred_lens, data_path=data_path)
+    
+    # 导出最佳配置到JSON文件
+    export_best_configs_to_json(results_by_pred_len, args.pred_lens, data_path=data_path)
     
     # 打印每个预测长度的详细结果（传入所有结果用于种子统计）
     # print_results_by_pred_len(results_by_pred_len, args.pred_lens, all_results=results, data_path=data_path)
