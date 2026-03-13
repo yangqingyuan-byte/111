@@ -11,10 +11,21 @@ from datetime import datetime
 from notify_wechat import WeChatNotifier
 import base64
 import getpass
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.backends import default_backend
+except ModuleNotFoundError as exc:
+    missing_module = exc.name or "cryptography"
+    print(
+        "❌ 缺少依赖模块: "
+        f"{missing_module}\n"
+        "请先安装:\n"
+        "  conda activate TimeCMA_Qwen3\n"
+        "  pip install cryptography"
+    )
+    sys.exit(1)
 
 def generate_key_from_password(password: bytes, salt: bytes) -> bytes:
     """从密码生成加密密钥"""

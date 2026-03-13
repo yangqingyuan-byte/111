@@ -285,9 +285,11 @@ class Dataset_Custom(Dataset):
         self.root_path = root_path
         self.data_path = data_path
 
-        if not data_path.endswith('.csv'):
+        if data_path.endswith('.csv'):
+            data_path_file = data_path[:-4]
+        else:
             data_path_file = data_path
-            data_path += '.csv' 
+            data_path += '.csv'
         self.data_path = os.path.join(root_path, data_path)
         self.data_path_file = data_path_file
 
@@ -301,8 +303,8 @@ class Dataset_Custom(Dataset):
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path,
-                                          self.data_path))
+        # self.data_path 已含 root_path，避免重复拼接导致路径错误
+        df_raw = pd.read_csv(self.data_path)
 
         '''
         df_raw.columns: ['date', ...(other features), target feature]

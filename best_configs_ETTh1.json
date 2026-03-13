@@ -1,6 +1,6 @@
 {
   "dataset": "ETTh1",
-  "export_timestamp": "2026-03-09 16:40:17",
+  "export_timestamp": "2026-03-09 16:53:18",
   "best_mse_configs": [
     {
       "pred_len": 96,
