@@ -4,7 +4,7 @@ import os
 import time
 import h5py
 import argparse
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 # 确保可以从项目根目录导入包（data_provider 等）
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -44,6 +44,29 @@ def parse_args():
         type=str,
         default="qwen3_0.6b",
         help="嵌入版本标识，用于区分不同版本生成的嵌入（默认 'qwen3_0.6b'，不会覆盖原有的 qwen3 嵌入）",
+    )
+    parser.add_argument(
+        "--start_idx",
+        type=int,
+        default=0,
+        help="当前分片的起始样本索引（含）",
+    )
+    parser.add_argument(
+        "--end_idx",
+        type=int,
+        default=-1,
+        help="当前分片的结束样本索引（含），默认 -1 表示到最后一个样本",
+    )
+    parser.add_argument(
+        "--skip_existing",
+        action="store_true",
+        help="如果目标 h5 已存在，则跳过该样本",
+    )
+    parser.add_argument(
+        "--indices_file",
+        type=str,
+        default="",
+        help="按文件提供要处理的精确样本索引，每行一个整数",
     )
     return parser.parse_args()
 
@@ -86,23 +109,50 @@ def save_embeddings(args):
     test_set = get_dataset(args.data_path, "test", args.input_len, args.output_len)
     val_set = get_dataset(args.data_path, "val", args.input_len, args.output_len)
 
+    datasets = {
+        "train": train_set,
+        "test": test_set,
+        "val": val_set,
+    }
+    full_dataset = datasets[args.divide]
+
+    total_samples = len(full_dataset)
+    if args.indices_file:
+        with open(args.indices_file, "r", encoding="utf-8") as f:
+            subset_indices = [int(line.strip()) for line in f if line.strip()]
+        if not subset_indices:
+            print(f"No indices found in {args.indices_file}, nothing to do.")
+            return
+        start_idx = subset_indices[0]
+        end_idx = subset_indices[-1]
+    else:
+        start_idx = max(0, args.start_idx)
+        end_idx = total_samples - 1 if args.end_idx < 0 else min(args.end_idx, total_samples - 1)
+        if start_idx > end_idx:
+            raise ValueError(
+                f"Invalid shard range for {args.divide}: start_idx={start_idx}, end_idx={end_idx}, total={total_samples}"
+            )
+        subset_indices = list(range(start_idx, end_idx + 1))
+
+    data_subset = Subset(full_dataset, subset_indices)
+
     data_loader = {
         "train": DataLoader(
-            train_set,
+            data_subset,
             batch_size=args.batch_size,
             shuffle=False,
             drop_last=False,
             num_workers=args.num_workers,
         ),
         "test": DataLoader(
-            test_set,
+            data_subset,
             batch_size=args.batch_size,
             shuffle=False,
             drop_last=False,
             num_workers=args.num_workers,
         ),
         "val": DataLoader(
-            val_set,
+            data_subset,
             batch_size=args.batch_size,
             shuffle=False,
             drop_last=False,
@@ -127,16 +177,21 @@ def save_embeddings(args):
     print(f"Saving Qwen3-0.6B embeddings to: {save_path}")
     print(f"Embedding version: {args.embed_version}")
     print(f"Model: {args.model_name}, d_model: {args.d_model}, layers: {args.l_layers}")
+    print(f"Shard range: [{start_idx}, {end_idx}] / {total_samples}")
 
     emb_time_path = "./Results/emb_logs/"
     os.makedirs(emb_time_path, exist_ok=True)
 
     for i, (x, y, x_mark, y_mark) in enumerate(data_loader):
+        global_idx = subset_indices[i]
+        file_path = f"{save_path}{global_idx}.h5"
+        if args.skip_existing and os.path.exists(file_path):
+            continue
+
         embeddings = gen_prompt_emb.generate_embeddings(
             x.to(device), x_mark.to(device)
         )
 
-        file_path = f"{save_path}{i}.h5"
         with h5py.File(file_path, "w") as hf:
             hf.create_dataset("embeddings", data=embeddings.cpu().numpy())
 
@@ -147,4 +202,3 @@ if __name__ == "__main__":
     save_embeddings(args)
     t2 = time.time()
     print(f"Total time spent: {(t2 - t1)/60:.4f} minutes")
-

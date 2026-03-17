@@ -1,0 +1,102 @@
+<mxfile host="app.diagrams.net" modified="2026-03-16T10:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="chap3-unified-framework" name="Unified Framework">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Chapter 3 Unified Forecasting Framework&#xa;基于 Qwen3 语义先验与门控注意力的统一预测骨架" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry x="360" y="20" width="700" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="input" value="Multivariate Input&#xa;X in R^(B x L x C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="250" width="170" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="revin" value="RevIN + Reshape&#xa;X -&gt; X' in R^(B x C x L)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="280" y="250" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="timeBox" value="Time-domain Branch&#xa;Linear(L -&gt; d_ts) + Transformer Encoder&#xa;H_time" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="560" y="150" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="freqBox" value="Base Frequency Branch&#xa;FFT Magnitude + Freq Token Projection&#xa;+ Frequency Encoder + Attention Pooling&#xa;H_freq" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="560" y="300" width="240" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="freqNote" value="Replaceable frequency interface&#xa;(Chapter 4: WPD, Chapter 5: FreMLP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="540" y="430" width="280" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="semInput" value="Frozen LLM Semantic Prior&#xa;Variable descriptions -&gt; Qwen3 embeddings&#xa;E in R^(B x d_LLM x C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="540" y="540" width="280" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="prompt" value="prompt_encoder&#xa;Structure adaptation&#xa;H_sem" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="880" y="555" width="170" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="gate" value="RichHorizonGate&#xa;Step-aware Time-Frequency Fusion&#xa;H_tf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="900" y="240" width="230" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="cma" value="Cross-modal Alignment (CMA)&#xa;Query: H_tf&#xa;Key / Value: H_sem" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="240" width="220" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="heads" value="AdaptiveDynamicHeadsCMA&#xa;Head-wise adaptive fusion&#xa;H_cross" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="380" width="220" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="decoder" value="Transformer Decoder" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1470" y="380" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="head" value="Linear(d_ts -&gt; H)&#xa;Prediction Head" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1700" y="380" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="revinInv" value="RevIN Inverse" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1930" y="380" width="150" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="output" value="Forecast Output&#xa;Y_hat in R^(B x H x C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="2130" y="380" width="190" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend" value="Legend:&#xa;Blue: input/output&#xa;Red: sequence modeling&#xa;Purple: fusion/alignment&#xa;Yellow: semantic prior / auxiliary modules&#xa;Green: normalization or gating" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="700" width="300" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="input" target="revin">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="revin" target="timeBox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="revin" target="freqBox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="timeBox" target="gate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="freqBox" target="gate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="semInput" target="prompt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="gate" target="cma">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="prompt" target="cma">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="cma" target="heads">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="heads" target="decoder">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="decoder" target="head">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="head" target="revinInv">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="revinInv" target="output">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e14" value="freeze" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;" edge="1" parent="1" source="semInput" target="cma">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1120" y="590" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

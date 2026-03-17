@@ -6,6 +6,7 @@
 __pycache__/
 .specstory/
 .gpu_monitor_config
+*.csv
 
 # LaTeX build artifacts
 *.pdf

@@ -6,6 +6,15 @@
 
 统一预测骨架面向多元长程时间序列预测任务，由输入归一化模块、时域编码分支、基础频域分支、外部语义嵌入分支、跨模态注意力对齐模块以及共享解码预测头组成。第四章和第五章的方法均在该骨架上展开，只是分别增强了频域分支及其融合方式。  
 
+图\ref{fig:chap3-unified-framework}给出了本文统一预测骨架的整体流程。模型首先对输入多元时间序列进行可逆归一化与维度重排，随后分别送入时域分支、基础频域分支和冻结大模型语义分支进行特征提取，再通过步长感知门控融合和跨模态对齐获得联合表示，最后经解码器和预测头输出未来时间步的预测结果。
+
+\begin{figure}[!htbp]
+    \centering
+    \makebox[\textwidth][c]{\includegraphics[width=1.08\textwidth]{chap3_framework}}
+    \bicaption{统一预测骨架总体结构图}{Overall architecture of the unified forecasting framework}
+    \label{fig:chap3-unified-framework}
+\end{figure}
+
 设输入多元时间序列为 \(\mathbf{X}\in\mathbb{R}^{B\times L\times C}\)，其中 \(B\) 为 batch 大小，\(L\) 为输入窗口长度，\(C\) 为变量数；外部语言模型生成的变量级语义嵌入记为 \(\mathbf{E}\in\mathbb{R}^{B\times d_{\text{LLM}}\times C}\)，预测步长为 \(H\)。经过 RevIN 归一化后，输入被重排为节点优先形式 \(\mathbf{X}^{\prime}\in\mathbb{R}^{B\times C\times L}\)，以便将每个变量视作一个节点并在统一框架中进行编码和对齐。整体数据流可以概括为以下几个阶段。  
 
 （1）\textbf{时域分支（Time-domain Branch）}：基座模型的时域分支首先利用线性层将历史长度 \(L\) 映射到固定通道维 \(d_{\text{ts}}\)，得到
