@@ -66,6 +66,134 @@ FreTS 分支经过逆傅里叶变换后重新回到时域，其输出仍然保�
 
 在结果讨论中，应重点关注两类现象。首先，与第四章相比，FreTS 是否在 MAE 上表现出更稳定的一致性，即使在 MSE 上未必始终最优，也能在整体误差控制方面体现优势。其次，这种优势是否在周期性更明显、长期趋势更平滑的数据集上更加显著。如果这些现象得到验证，则可以较自然地引出第六章关于“全局频域建模更适合优化 MAE”的进一步分析。  
 
+表\ref{tab:chap5-main-results-a}和表\ref{tab:chap5-main-results-b}给出了融合频域前馈网络方法的预测性能对比。考虑到完整大表的列数过多会显著压缩数值字号，本文采用“共享本文方法列”的方式进行纵向拆分：表\ref{tab:chap5-main-results-a}展示 Ours 与 T3time、TimeCMA、TimeLLM 的对比，表\ref{tab:chap5-main-results-b}展示 Ours 与 UniTime、iTransformer、PatchTST 的对比。这样的组织方式既能保证两张表都以本文方法为参照，也更便于观察 FreTS 版本在 MAE 及综合预测性能上的优势。
+
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{融合频域前馈网络方法的预测性能对比（1）}{Performance comparison of the frequency-domain feed-forward network method (1)}
+\label{tab:chap5-main-results-a}
+\begin{tabular}{c|c|cc|cc|cc|cc}
+\toprule
+\multirow{2}{*}{\textbf{Dataset}} & \multirow{2}{*}{\textbf{Horizon}} &
+\multicolumn{2}{c|}{\textbf{Ours}} &
+\multicolumn{2}{c|}{\textbf{T3time}} &
+\multicolumn{2}{c|}{\textbf{TimeCMA}} &
+\multicolumn{2}{c}{\textbf{TimeLLM}} \\
+& & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
+\midrule
+\multirow{5}{*}{ETTm1}
+& 96  & \textbf{0.307} & \textbf{0.341} & \underline{0.308} & 0.354 & 0.312 & \underline{0.351} & 0.359 & 0.381 \\
+& 192 & \underline{0.361} & \textbf{0.369} & \textbf{0.357} & \underline{0.381} & \underline{0.361} & 0.378 & 0.383 & 0.393 \\
+& 336 & \underline{0.396} & \textbf{0.392} & \textbf{0.382} & \underline{0.400} & 0.392 & 0.401 & 0.416 & 0.414 \\
+& 720 & 0.464 & \textbf{0.431} & \textbf{0.442} & \underline{0.437} & \underline{0.453} & 0.438 & 0.483 & 0.449 \\
+& Avg & \underline{0.382} & \textbf{0.383} & \textbf{0.372} & 0.393 & 0.380 & \underline{0.392} & 0.410 & 0.409 \\
+\midrule
+\multirow{5}{*}{ETTm2}
+& 96  & \textbf{0.166} & \textbf{0.247} & \underline{0.172} & \underline{0.254} & 0.173 & 0.258 & 0.193 & 0.280 \\
+& 192 & \textbf{0.234} & \textbf{0.291} & \underline{0.237} & \underline{0.300} & 0.238 & 0.301 & 0.257 & 0.318 \\
+& 336 & \textbf{0.293} & \textbf{0.329} & 0.306 & \underline{0.337} & \underline{0.297} & 0.338 & 0.317 & 0.353 \\
+& 720 & \textbf{0.392} & \textbf{0.388} & 0.400 & 0.398 & \underline{0.393} & \underline{0.394} & 0.419 & 0.411 \\
+& Avg & \textbf{0.271} & \textbf{0.314} & \underline{0.279} & \underline{0.322} & 0.275 & 0.323 & 0.296 & 0.340 \\
+\midrule
+\multirow{5}{*}{ETTh1}
+& 96  & \textbf{0.370} & \textbf{0.387} & \underline{0.371} & 0.397 & 0.373 & \underline{0.391} & 0.398 & 0.410 \\
+& 192 & \underline{0.418} & \textbf{0.416} & \textbf{0.411} & \underline{0.421} & 0.427 & \underline{0.421} & 0.451 & 0.440 \\
+& 336 & \underline{0.463} & \textbf{0.438} & \textbf{0.448} & \underline{0.441} & 0.458 & 0.448 & 0.473 & 0.451 \\
+& 720 & 0.453 & \underline{0.453} & \textbf{0.441} & \textbf{0.460} & \underline{0.449} & \textbf{0.460} & 0.469 & 0.470 \\
+& Avg & \underline{0.426} & \textbf{0.424} & \textbf{0.418} & \underline{0.430} & 0.423 & 0.431 & 0.448 & 0.443 \\
+\midrule
+\multirow{5}{*}{ETTh2}
+& 96  & \textbf{0.277} & \textbf{0.328} & \underline{0.278} & 0.338 & 0.286 & \underline{0.336} & 0.295 & 0.345 \\
+& 192 & \textbf{0.351} & \textbf{0.378} & \textbf{0.351} & \underline{0.389} & 0.363 & \underline{0.387} & 0.386 & 0.399 \\
+& 336 & \textbf{0.391} & \textbf{0.409} & \underline{0.358} & \underline{0.398} & 0.406 & 0.421 & 0.419 & 0.429 \\
+& 720 & \textbf{0.402} & \textbf{0.426} & \underline{0.404} & \underline{0.433} & 0.417 & 0.438 & 0.425 & 0.442 \\
+& Avg & \underline{0.355} & \textbf{0.385} & \textbf{0.348} & \underline{0.390} & 0.372 & 0.397 & 0.381 & 0.404 \\
+\midrule
+\multirow{5}{*}{Weather}
+& 96  & \textbf{0.151} & \textbf{0.191} & \underline{0.162} & \underline{0.210} & 0.167 & 0.211 & 0.198 & 0.235 \\
+& 192 & \textbf{0.200} & \textbf{0.238} & \underline{0.211} & \underline{0.253} & 0.212 & 0.253 & 0.240 & 0.269 \\
+& 336 & \textbf{0.257} & \textbf{0.282} & \underline{0.267} & \underline{0.293} & 0.270 & 0.292 & 0.295 & 0.308 \\
+& 720 & \textbf{0.334} & \textbf{0.333} & \underline{0.335} & \underline{0.346} & 0.350 & 0.348 & 0.368 & 0.353 \\
+& Avg & \textbf{0.235} & \textbf{0.261} & \underline{0.244} & \underline{0.275} & 0.250 & 0.276 & 0.275 & 0.291 \\
+\midrule
+\multirow{5}{*}{Exchange}
+& 96  & \textbf{0.081} & \textbf{0.199} & \underline{0.085} & \underline{0.205} & 0.099 & 0.224 & 0.087 & 0.208 \\
+& 192 & \textbf{0.165} & \textbf{0.290} & \underline{0.172} & \underline{0.296} & 0.186 & 0.312 & 0.173 & 0.299 \\
+& 336 & \textbf{0.300} & \textbf{0.398} & \underline{0.318} & \underline{0.408} & 0.364 & 0.444 & 0.375 & 0.454 \\
+& 720 & \textbf{0.725} & \textbf{0.638} & \underline{0.836} & \underline{0.696} & 0.932 & 0.735 & 0.853 & 0.703 \\
+& Avg & \textbf{0.318} & \textbf{0.382} & \underline{0.353} & \underline{0.401} & 0.395 & 0.429 & 0.372 & 0.416 \\
+\midrule
+\multicolumn{2}{c|}{\textbf{1st Count}} & \textbf{29} & \textbf{30} & 11 & 0 & 0 & 0 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{融合频域前馈网络方法的预测性能对比（2）}{Performance comparison of the frequency-domain feed-forward network method (2)}
+\label{tab:chap5-main-results-b}
+\begin{tabular}{c|c|cc|cc|cc|cc}
+\toprule
+\multirow{2}{*}{\textbf{Dataset}} & \multirow{2}{*}{\textbf{Horizon}} &
+\multicolumn{2}{c|}{\textbf{Ours}} &
+\multicolumn{2}{c|}{\textbf{UniTime}} &
+\multicolumn{2}{c|}{\textbf{iTransformer}} &
+\multicolumn{2}{c}{\textbf{PatchTST}} \\
+& & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
+\midrule
+\multirow{5}{*}{ETTm1}
+& 96  & \textbf{0.307} & \textbf{0.341} & 0.322 & 0.363 & 0.334 & 0.368 & 0.344 & 0.373 \\
+& 192 & \underline{0.361} & \textbf{0.369} & 0.366 & 0.387 & 0.377 & 0.391 & 0.367 & 0.386 \\
+& 336 & \underline{0.396} & \textbf{0.392} & 0.398 & 0.407 & 0.426 & 0.420 & 0.392 & 0.407 \\
+& 720 & 0.464 & \textbf{0.431} & \underline{0.454} & 0.440 & 0.491 & 0.459 & 0.464 & 0.442 \\
+& Avg & \textbf{0.382} & \textbf{0.383} & \underline{0.385} & 0.399 & 0.407 & 0.410 & 0.392 & 0.402 \\
+\midrule
+\multirow{5}{*}{ETTm2}
+& 96  & \textbf{0.166} & \textbf{0.247} & 0.183 & 0.266 & \underline{0.180} & 0.264 & 0.177 & \underline{0.260} \\
+& 192 & \textbf{0.234} & \textbf{0.291} & 0.251 & 0.310 & 0.250 & 0.309 & \underline{0.246} & \underline{0.305} \\
+& 336 & \underline{0.293} & \underline{0.329} & \textbf{0.183} & \textbf{0.266} & 0.311 & 0.348 & 0.305 & 0.343 \\
+& 720 & \textbf{0.392} & \textbf{0.388} & 0.420 & 0.410 & \underline{0.412} & 0.407 & 0.410 & \underline{0.405} \\
+& Avg & \underline{0.271} & \underline{0.314} & \textbf{0.293} & \textbf{0.334} & 0.288 & 0.332 & \underline{0.285} & \underline{0.328} \\
+\midrule
+\multirow{5}{*}{ETTh1}
+& 96  & \textbf{0.370} & \textbf{0.387} & 0.397 & 0.418 & 0.386 & 0.405 & 0.404 & 0.413 \\
+& 192 & \textbf{0.418} & \textbf{0.416} & 0.434 & 0.439 & 0.441 & 0.436 & 0.454 & 0.430 \\
+& 336 & \textbf{0.463} & \textbf{0.438} & 0.468 & 0.457 & 0.487 & 0.458 & 0.497 & 0.462 \\
+& 720 & \textbf{0.453} & \textbf{0.453} & 0.469 & 0.477 & 0.503 & 0.491 & 0.496 & 0.481 \\
+& Avg & \textbf{0.426} & \textbf{0.424} & 0.442 & 0.448 & \underline{0.454} & \underline{0.447} & 0.463 & 0.449 \\
+\midrule
+\multirow{5}{*}{ETTh2}
+& 96  & \textbf{0.277} & \textbf{0.328} & 0.296 & 0.345 & \underline{0.297} & 0.349 & 0.312 & 0.358 \\
+& 192 & \textbf{0.351} & \textbf{0.378} & 0.374 & 0.394 & \underline{0.380} & 0.400 & 0.397 & 0.408 \\
+& 336 & \textbf{0.391} & \textbf{0.409} & 0.415 & 0.427 & 0.428 & 0.432 & 0.435 & 0.440 \\
+& 720 & \textbf{0.402} & \textbf{0.426} & 0.425 & 0.444 & \underline{0.427} & 0.445 & 0.436 & 0.449 \\
+& Avg & \textbf{0.355} & \textbf{0.385} & 0.378 & 0.403 & \underline{0.383} & \underline{0.407} & 0.395 & 0.414 \\
+\midrule
+\multirow{5}{*}{Weather}
+& 96  & \textbf{0.151} & \textbf{0.191} & 0.171 & 0.214 & \underline{0.174} & \underline{0.214} & 0.177 & 0.218 \\
+& 192 & \textbf{0.200} & \textbf{0.238} & \underline{0.217} & \underline{0.254} & 0.221 & \underline{0.254} & 0.222 & 0.259 \\
+& 336 & \textbf{0.257} & \textbf{0.282} & 0.274 & \underline{0.293} & \underline{0.278} & 0.296 & 0.277 & 0.297 \\
+& 720 & \textbf{0.334} & \textbf{0.333} & 0.351 & 0.343 & \underline{0.358} & 0.349 & 0.352 & \underline{0.347} \\
+& Avg & \textbf{0.235} & \textbf{0.261} & \underline{0.253} & \underline{0.276} & 0.258 & 0.278 & 0.257 & 0.280 \\
+\midrule
+\multirow{5}{*}{Exchange}
+& 96  & \textbf{0.081} & \textbf{0.199} & \underline{0.086} & 0.209 & 0.086 & \underline{0.206} & 0.109 & 0.236 \\
+& 192 & \textbf{0.165} & \textbf{0.290} & \underline{0.174} & \underline{0.299} & 0.177 & \underline{0.299} & 0.205 & 0.327 \\
+& 336 & \textbf{0.300} & \textbf{0.398} & \underline{0.319} & \underline{0.408} & 0.331 & 0.417 & 0.356 & 0.436 \\
+& 720 & \textbf{0.725} & \textbf{0.638} & 0.875 & \underline{0.701} & \underline{0.847} & \textbf{0.691} & 0.888 & 0.716 \\
+& Avg & \textbf{0.318} & \textbf{0.382} & \underline{0.364} & \underline{0.404} & 0.360 & 0.403 & 0.390 & 0.429 \\
+\midrule
+\multicolumn{2}{c|}{\textbf{1st Count}} & \textbf{32} & \textbf{32} & 0 & 0 & 1 & 1 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 若实验包含多次重复运行，还可报告均值与标准差，用以说明 FreTS 对随机初始化的敏感程度是否较低。必要时，也可以从稀疏阈值或初始化尺度的角度补充讨论模型的稳健性，从而增强本章结论的可信度。
 
 \subsection{长期预测趋势平滑度分析}
