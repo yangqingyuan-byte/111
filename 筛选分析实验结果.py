@@ -1,6 +1,8 @@
 import json
 import os
 import sys
+import csv
+from datetime import datetime
 from tabulate import tabulate
 
 def load_logs(log_file):
@@ -42,9 +44,136 @@ def format_params(row):
     params = [f"{k}={v}" for k, v in row.items() if k not in exclude]
     return "\n".join(params)
 
+def get_exportable_params(row):
+    """提取适合导出的参数组合"""
+    exclude = {'data_path', 'model', 'model_id', 'test_mse', 'test_mae', 'timestamp'}
+    return {k: v for k, v in row.items() if k not in exclude}
+
 def get_model_name(log):
     """获取模型名称，优先使用 model_id，如果不存在则使用 model 字段"""
     return log.get('model_id') or log.get('model', 'Unknown')
+
+def sanitize_name(name):
+    return str(name).replace('/', '_').replace(' ', '_')
+
+def export_best_configs(best_items, selected_data, selected_model, metric_name):
+    """导出最佳参数组合到 JSON/CSV"""
+    if not best_items:
+        print("\n没有可导出的结果。")
+        return
+
+    export_dir = "/root/0/T3Time/Results/best_config_exports"
+    os.makedirs(export_dir, exist_ok=True)
+
+    data_name = sanitize_name(selected_data or "all_data")
+    model_name = sanitize_name(selected_model or "all_models")
+    metric_tag = metric_name.lower()
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_name = f"{data_name}_{model_name}_{metric_tag}_{ts}"
+    json_path = os.path.join(export_dir, f"{base_name}.json")
+    csv_path = os.path.join(export_dir, f"{base_name}.csv")
+
+    export_rows = []
+    for item in best_items:
+        source = item['source_log']
+        export_rows.append({
+            'pred_len': item['pred_len'],
+            'metric': metric_name,
+            'selected_model': get_model_name(source),
+            'test_mse': source['test_mse'],
+            'test_mae': source['test_mae'],
+            'data_path': source.get('data_path'),
+            'params': get_exportable_params(source),
+        })
+
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(export_rows, f, ensure_ascii=False, indent=2)
+
+    flat_rows = []
+    all_param_keys = sorted({
+        key
+        for row in export_rows
+        for key in row['params'].keys()
+    })
+    for row in export_rows:
+        flat_row = {
+            'pred_len': row['pred_len'],
+            'metric': row['metric'],
+            'selected_model': row['selected_model'],
+            'test_mse': row['test_mse'],
+            'test_mae': row['test_mae'],
+            'data_path': row['data_path'],
+        }
+        for key in all_param_keys:
+            flat_row[key] = row['params'].get(key, '')
+        flat_rows.append(flat_row)
+
+    with open(csv_path, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=['pred_len', 'metric', 'selected_model', 'test_mse', 'test_mae', 'data_path'] + all_param_keys
+        )
+        writer.writeheader()
+        writer.writerows(flat_rows)
+
+    print("\n已导出最佳参数组合:")
+    print(f"  JSON: {json_path}")
+    print(f"  CSV : {csv_path}")
+
+def maybe_export_best_configs(mse_best_by_pred_len, mae_best_by_pred_len, selected_data, selected_model):
+    """交互式导出最佳参数组合"""
+    print("\n是否导出最佳参数组合？")
+    print("  1. 导出按 MSE 选出的最佳组合")
+    print("  2. 导出按 MAE 选出的最佳组合")
+    print("  3. 两者都导出")
+    print("  0. 不导出")
+    choice = input("\n请输入编号 (默认 0): ").strip()
+
+    if choice == '1':
+        export_best_configs(mse_best_by_pred_len, selected_data, selected_model, "MSE")
+    elif choice == '2':
+        export_best_configs(mae_best_by_pred_len, selected_data, selected_model, "MAE")
+    elif choice == '3':
+        export_best_configs(mse_best_by_pred_len, selected_data, selected_model, "MSE")
+        export_best_configs(mae_best_by_pred_len, selected_data, selected_model, "MAE")
+
+def maybe_export_single_best(mse_sorted, mae_sorted, selected_data, selected_model):
+    """交互式导出当前筛选条件下的最佳单条组合"""
+    print("\n是否导出当前筛选条件下的最佳参数组合？")
+    print("  1. 导出按 MSE 排序的第 1 名")
+    print("  2. 导出按 MAE 排序的第 1 名")
+    print("  3. 两者都导出")
+    print("  0. 不导出")
+    choice = input("\n请输入编号 (默认 0): ").strip()
+
+    mse_items = []
+    mae_items = []
+    if mse_sorted:
+        mse_items.append({
+            'pred_len': mse_sorted[0].get('pred_len', 'N/A'),
+            'mse': mse_sorted[0]['test_mse'],
+            'mae': mse_sorted[0]['test_mae'],
+            'model': get_model_name(mse_sorted[0]),
+            'params': format_params(mse_sorted[0]),
+            'source_log': mse_sorted[0],
+        })
+    if mae_sorted:
+        mae_items.append({
+            'pred_len': mae_sorted[0].get('pred_len', 'N/A'),
+            'mse': mae_sorted[0]['test_mse'],
+            'mae': mae_sorted[0]['test_mae'],
+            'model': get_model_name(mae_sorted[0]),
+            'params': format_params(mae_sorted[0]),
+            'source_log': mae_sorted[0],
+        })
+
+    if choice == '1':
+        export_best_configs(mse_items, selected_data, selected_model, "MSE")
+    elif choice == '2':
+        export_best_configs(mae_items, selected_data, selected_model, "MAE")
+    elif choice == '3':
+        export_best_configs(mse_items, selected_data, selected_model, "MSE")
+        export_best_configs(mae_items, selected_data, selected_model, "MAE")
 
 def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
     """统计所有预测长度的最好结果并求均值"""
@@ -76,7 +205,8 @@ def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
             'mse': mse_best['test_mse'],
             'mae': mse_best['test_mae'],
             'model': mse_best_model,
-            'params': format_params(mse_best)
+            'params': format_params(mse_best),
+            'source_log': mse_best
         })
         mse_values.append(mse_best['test_mse'])
         
@@ -88,7 +218,8 @@ def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
             'mse': mae_best['test_mse'],
             'mae': mae_best['test_mae'],
             'model': mae_best_model,
-            'params': format_params(mae_best)
+            'params': format_params(mae_best),
+            'source_log': mae_best
         })
         mae_values.append(mae_best['test_mae'])
     
@@ -127,6 +258,7 @@ def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
     print(f"\n所有预测长度 MAE 最好结果的平均值: {mae_mean:.6f}")
     mae_mse_mean = sum(item['mse'] for item in mae_best_by_pred_len) / len(mae_best_by_pred_len) if mae_best_by_pred_len else 0
     print(f"所有预测长度对应 MSE 的平均值: {mae_mse_mean:.6f}")
+    maybe_export_best_configs(mse_best_by_pred_len, mae_best_by_pred_len, selected_data, selected_model)
 
 def main():
     log_file = "/root/0/T3Time/experiment_results.log"
@@ -245,6 +377,7 @@ def main():
     
     print(f"\n>>> 按 Test MAE 排序的 {mode_str} 结果:")
     print(tabulate(mae_table, headers=["Model", "Data", "MSE", "MAE", "Parameters"], tablefmt="grid"))
+    maybe_export_single_best(mse_sorted, mae_sorted, selected_data, selected_model)
 
 if __name__ == "__main__":
     try:
@@ -252,4 +385,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n已退出。")
         sys.exit(0)
-

@@ -12,29 +12,172 @@
 
 \section{模型架构设计}
 
+图\ref{fig:chap4-wavelet-packet-overview}给出了本章所提出的融合小波包分解的时频域增强模型整体结构。与第三章统一骨架相比，该模型将频域分支替换为可学习小波包分解模块，并在子带级编码、频带聚合以及步长感知融合的基础上与冻结语义先验共同完成预测。
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{Img/chap4_wavelet_packet_overview.png}
+\caption{融合小波包分解的时频域增强模型整体结构图}
+\label{fig:chap4-wavelet-packet-overview}
+\end{figure}
+
 \subsection{小波包多尺度分解策略}
 
-本章采用 Daubechies 小波族中的 \texttt{db4} 作为基础小波，并使用两层小波包分解作为默认配置。选择 \texttt{db4} 的原因在于其具有较好的紧支撑性和时频局部化能力，能够在有限长度窗口内较稳定地分离平滑趋势与局部突变信息。设输入序列为 \(\mathbf{X}'\in\mathbb{R}^{B\times N\times L}\)，其中 \(B\) 为 batch 大小，\(N\) 为变量数，\(L\) 为历史窗口长度。对每个变量通道，小波包分解模块在每一层同时对近似分量与细节分量继续分解，因此当分解层数为 \(J\) 时，可得到 \(2^J\) 个叶子子带。  
+本章的小波包增强模块建立在第三章统一骨架之上，但频域分支不再采用单一的 FFT 幅值表示，而是引入可学习小波包分解（learnable wavelet packet decomposition）对输入序列进行递归式多尺度拆分。设经 RevIN 归一化后的输入序列为
+\begin{equation}
+\mathbf{X}'\in\mathbb{R}^{B\times N\times L},
+\label{eq:chap4-input}
+\end{equation}
+其中 \(B\) 表示批量大小，\(N\) 表示变量个数，\(L\) 表示历史窗口长度。对任意变量通道对应的一维序列 \(x=\{x_t\}_{t=1}^{L}\)，本章不是直接使用固定小波滤波器完成一次性分解，而是采用提升格式（lifting scheme）构造可学习的小波包步骤。具体而言，首先将序列按奇偶位置拆分为
+\begin{equation}
+x_{\mathrm{e}}=\{x_{2t}\},
+\label{eq:chap4-even}
+\end{equation}
+\begin{equation}
+x_{\mathrm{o}}=\{x_{2t+1}\}.
+\label{eq:chap4-odd}
+\end{equation}
+随后分别利用可学习的预测算子 \(P(\cdot)\) 和更新算子 \(U(\cdot)\) 生成细节分量与近似分量：
+\begin{equation}
+d=x_{\mathrm{o}}-P(x_{\mathrm{e}}),
+\label{eq:chap4-detail}
+\end{equation}
+\begin{equation}
+a=x_{\mathrm{e}}+U(d).
+\label{eq:chap4-approx}
+\end{equation}
+其中，\(P(\cdot)\) 与 \(U(\cdot)\) 在实现上由一维卷积层和非线性激活组成，用于从数据中自适应学习适合当前任务的局部滤波结构。与固定 \texttt{db4} 滤波器相比，该设计能够根据不同数据集的统计特征自动调整分解行为，因此更适合多元时间序列预测中的异质变量建模场景。  
 
-在具体实现中，本文通过卷积形式实现离散小波包分解：先根据预定义小波滤波器构造低通和高通卷积核，再对输入序列进行带步长的卷积与递归展开，从而得到不同频带对应的子序列。与直接调用离线分解工具相比，该实现方式便于和深度学习框架下的张量计算保持一致，也更方便后续与编码器模块无缝衔接。分解后的每个子带在时间长度上短于原始输入，但保留了对应频带的主要动态模式，因此可被视为对原始序列的多尺度重表征。  
+为了抑制局部噪声对子带分解的干扰，本章进一步在近似分量和细节分量上引入可学习软阈值函数。对任意输入 \(z\)，其形式可写为
+\begin{equation}
+\mathcal{S}_{\tau}(z)=\mathrm{sign}(z)\max(|z|-\tau,0),
+\label{eq:chap4-soft-threshold}
+\end{equation}
+其中 \(\tau\) 为可学习阈值参数。于是，式（\ref{eq:chap4-detail}）和式（\ref{eq:chap4-approx}）中的结果在进入下一层分解之前被修正为
+\begin{equation}
+\tilde{d}=\mathcal{S}_{\tau_d}(d),
+\label{eq:chap4-threshold-detail}
+\end{equation}
+\begin{equation}
+\tilde{a}=\mathcal{S}_{\tau_a}(a).
+\label{eq:chap4-threshold-approx}
+\end{equation}
+该机制的作用在于削弱幅值较小且不稳定的局部扰动，使分解后的子带表示更加稀疏和稳健，也与后续实验中 MSE 对大误差样本的敏感性分析形成对应。  
 
-从建模角度看，小波包多尺度分解策略的作用并不仅仅是增加特征数量，而是将原本混合在同一序列中的不同频率成分显式拆分出来。这样一来，模型不需要在同一个编码器内部同时兼顾长期趋势和瞬时波动，而可以在子带层面分别学习不同频段的贡献，再在后续阶段进行自适应融合。这一设计为本章后续的逐子带编码、子带注意力池化与跨分支交互奠定了基础。
+在小波包框架下，近似分量与细节分量都会继续向下递归分解。若分解层数设为 \(J\)，则第 \(j\) 层共有 \(2^j\) 个节点，第 \(J\) 层可得到 \(2^J\) 个叶子子带。记第 \(J\) 层第 \(i\) 个叶子节点为 \(\mathbf{S}_i\in\mathbb{R}^{B\times N\times L_i}\)，则有
+\begin{equation}
+\{\mathbf{S}_1,\mathbf{S}_2,\dots,\mathbf{S}_{2^J}\}
+\leftarrow \mathrm{WPD}\left(\mathbf{X}'\right),
+\label{eq:chap4-wpd}
+\end{equation}
+其中 \(L_i\approx L/2^J\)。在本文默认设置中取 \(J=2\)，因此可得到 4 个叶子子带。这样的设置兼顾了频带分辨率与子带长度：若 \(J\) 过小，则不同尺度成分无法充分分离；若 \(J\) 过大，则子带长度过短，局部表示容易变得不稳定，并增加后续建模开销。  
+
+从建模机制上看，式（\ref{eq:chap4-wpd}）并不是简单地增加特征数量，而是将原始时间序列中耦合在一起的低频趋势、周期波动与高频扰动拆解为多路具有明确频带含义的子序列。由此，模型可以在子带层面分别学习局部模式，再在后续阶段完成重组与融合。这一结构正是第四章区别于第三章统一骨架以及第五章全局频域前馈方案的关键所在。
 
 \subsection{频域子带特征与 LLM 嵌入空间的映射机制}
 
-得到多路子带序列后，模型首先需要将不同长度的子带表示映射到统一的通道空间。为此，本文为每个子带配置独立的线性投影层，将原始的一维子带值映射为 \(C\) 维向量表示。记第 \(i\) 个子带序列为 \(\mathbf{S}_i\in\mathbb{R}^{B\times N\times L_i}\)，将其重排为 \([BN, L_i, 1]\) 后，经线性层得到 \(\mathbf{H}_i\in\mathbb{R}^{BN\times L_i\times C}\)。通过这种方式，不同子带虽然在时间长度上并不相同，但都被统一映射到了相同的通道维度，便于后续共享编码器和聚合模块进行处理。  
+得到 \(\{\mathbf{S}_i\}_{i=1}^{2^J}\) 后，模型需要将不同长度的子带映射到统一的通道空间，以便后续与时域分支和语义分支对齐。为此，本文为每个叶子子带配置独立的线性投影层 \(\mathbf{W}_i\in\mathbb{R}^{1\times C}\)。将第 \(i\) 个子带重排为 \([BN,L_i,1]\) 后，可写出其初始嵌入形式：
+\begin{equation}
+\mathbf{H}_i^{(0)}=\mathbf{S}_i\mathbf{W}_i+\mathbf{b}_i,
+\label{eq:chap4-band-proj}
+\end{equation}
+\begin{equation}
+\mathbf{H}_i^{(0)}\in\mathbb{R}^{BN\times L_i\times C},
+\label{eq:chap4-band-proj-shape}
+\end{equation}
+其中 \(C\) 为统一通道维度。使用独立投影而非共享投影的原因在于，不同子带对应的频谱区域和统计特性并不相同，单一线性映射难以同时兼顾低频趋势与高频扰动的表达需求。  
 
-为了保留不同子带的频带身份，本文进一步引入可学习的频带位置嵌入，将其加到每个子带的投影结果上。这样做的目的不是对时间顺序再编码一次，而是显式地区分“该特征来自哪一频段”。从实现上看，这相当于为每个叶子节点引入一个可学习偏置，使模型在参数共享的前提下仍然能够识别不同子带的语义角色。随后，各子带特征进入共享的门控编码器进行时序建模，得到更高层的子带表示。  
+为了在参数共享的后续编码过程中保留“频带身份”，本章进一步为每个子带引入可学习的频带位置嵌入 \(\mathbf{e}_i\in\mathbb{R}^{C}\)，并将其加入式（\ref{eq:chap4-band-proj}）得到
+\begin{equation}
+\mathbf{H}_i^{(1)}=\mathbf{H}_i^{(0)}+\mathbf{e}_i.
+\label{eq:chap4-band-id}
+\end{equation}
+这里的嵌入并非时间位置编码，而是对子带语义的显式标识，旨在让共享编码器能够区分“当前特征来源于哪个频段”。随后，所有子带特征共享同一个门控 Transformer 编码器进行建模。若记编码器为 \(\mathcal{E}_{\mathrm{wp}}(\cdot)\)，则有
+\begin{equation}
+\tilde{\mathbf{H}}_i=\mathcal{E}_{\mathrm{wp}}\!\left(\mathbf{H}_i^{(1)}\right),
+\label{eq:chap4-band-encoder}
+\end{equation}
+其中 \(\tilde{\mathbf{H}}_i\in\mathbb{R}^{BN\times L_i\times C}\)。共享编码器一方面能够减少参数规模，另一方面也促使不同频带在统一表示空间中接受一致的建模约束。  
 
-经过上述处理后，小波包分支最终会输出变量级、定长的频域增强表示，其形状与第三章时域分支输出保持一致，均可整理为 \([B,N,C]\) 或转置后的 \([B,C,N]\)。这使得该分支可以自然地接入统一框架中的跨分支融合模块，并在后续与冻结大语言模型提供的变量级语义嵌入共同进入 CMA 模块。换言之，小波包分支并不直接与 LLM 的 token 级表示逐点交互，而是先在本分支内部完成多尺度编码与压缩，再以变量级语义向量的形式参与跨模态对齐，从而保证结构简洁并降低训练复杂度。
+在获得时序编码结果后，模型需要进一步将每个子带压缩为变量级向量。本文采用注意力池化而非简单均值池化。设可学习查询向量为 \(\mathbf{q}\in\mathbb{R}^{C}\)，则第 \(i\) 个子带中第 \(t\) 个位置的注意力权重为
+\begin{equation}
+\alpha_{i,t}
+=\frac{\exp(\mathbf{q}^{\top}\tilde{\mathbf{h}}_{i,t})}
+{\sum_{\tau=1}^{L_i}\exp(\mathbf{q}^{\top}\tilde{\mathbf{h}}_{i,\tau})},
+\label{eq:chap4-band-attn}
+\end{equation}
+相应的变量级子带表示为
+\begin{equation}
+\mathbf{p}_i=\sum_{t=1}^{L_i}\alpha_{i,t}\tilde{\mathbf{h}}_{i,t}.
+\label{eq:chap4-band-pool}
+\end{equation}
+由此可得到所有子带的堆叠表示
+\begin{equation}
+\mathbf{P}=\mathrm{Stack}(\mathbf{p}_1,\dots,\mathbf{p}_{2^J})
+\in\mathbb{R}^{BN\times 2^J\times C}.
+\label{eq:chap4-band-stack}
+\end{equation}
+
+在训练阶段，为避免模型过度依赖某一固定频带，代码实现中还引入了频带随机丢弃（frequency dropout）策略，即以一定概率对 \(\mathbf{P}\) 中的某些子带向量进行随机屏蔽。这一步不改变推理阶段结构，但能够提高多尺度融合的鲁棒性。进一步地，模型对所有子带向量执行一次频带级自注意力交互，以建模不同频带之间的相关性。随后，引入具有先验初始化的可学习频带权重 \(\mathbf{w}_i\in\mathbb{R}^{C}\)，得到最终的小波包分支表示：
+\begin{equation}
+\mathbf{H}^{\mathrm{wp}}
+=\sum_{i=1}^{2^J}\sigma(\mathbf{w}_i)\odot \hat{\mathbf{p}}_i,
+\label{eq:chap4-wp-final}
+\end{equation}
+其中 \(\hat{\mathbf{p}}_i\) 表示频带交互后的子带向量，\(\sigma(\cdot)\) 为 Sigmoid 函数，\(\odot\) 表示逐元素乘法。式（\ref{eq:chap4-wp-final}）的意义在于：不同频带对最终预测任务的重要性并不相同，模型应通过可学习权重自适应决定各频带的贡献比例。  
+
+需要指出的是，小波包分支并不直接与 LLM 的 token 级表示逐点对齐，而是先在本分支内部完成“分解、编码、池化、重组”，最终输出变量级表示 \(\mathbf{H}^{\mathrm{wp}}\in\mathbb{R}^{B\times N\times C}\)。这一设计使该分支能够自然地接入第三章的统一多模态框架，并在保持结构紧凑的同时降低跨模态对齐的复杂度。
 
 \subsection{多尺度特征融合与预测头设计}
 
-在子带级编码阶段，本文对每一路子带特征使用共享的 \texttt{GatedTransformerEncoderLayer} 进行建模。记编码后的第 \(i\) 个子带特征为 \(\tilde{\mathbf{H}}_i\in\mathbb{R}^{BN\times L_i\times C}\)。随后，模型在时间维上施加注意力池化，得到该子带对应的变量级向量 \(\mathbf{h}_i\in\mathbb{R}^{BN\times C}\)。与简单的平均池化相比，注意力池化能够根据子带内部不同时间位置的重要性自适应分配权重，从而保留对预测更敏感的局部模式。除此之外，池化模块还引入了可学习的子带权重参数，用于调节不同频段在最终融合中的贡献比例。  
+与小波包分支并行，第三章中的时域主干仍然保留。对归一化后的输入 \(\mathbf{X}'\)，模型首先通过长度到特征的线性映射得到时域表示
+\begin{equation}
+\mathbf{H}^{\mathrm{time}}=\phi(\mathbf{X}')\in\mathbb{R}^{B\times N\times C},
+\label{eq:chap4-time-branch}
+\end{equation}
+再经若干层门控 Transformer 编码器获得更高层时域特征。第四章的关键并不在于替换整个主干，而在于通过小波包分支为该主干提供局部多尺度补充信息。  
 
-在获得所有子带的变量级表示后，模型将其沿子带维堆叠并进行加权聚合，形成统一的小波包分支表示 \(\mathbf{H}^{\text{wp}}\in\mathbb{R}^{B\times N\times C}\)。随后，该表示与时域分支输出 \(\mathbf{H}^{\text{time}}\) 通过跨注意力模块进行交互：以时域特征为查询，以小波包特征为键和值，得到融合后的时频表示。与直接拼接或逐元素加权相比，这种跨注意力设计能够更细粒度地学习“时域表示应从哪些频带信息中获益”，其输出再经过残差连接与层归一化处理，得到更稳定的联合表示。  
+在时域与小波包分支的融合阶段，本文没有采用简单拼接，而是设计了显式的步长感知门控融合机制。设预测步长归一化后形成的任务先验为 \(\mathbf{r}\in\mathbb{R}^{B\times N\times 1}\)，则融合门控可写为
+\begin{equation}
+\mathbf{G}
+=\sigma\!\left(
+\mathrm{MLP}\left[
+\mathbf{H}^{\mathrm{time}};\,
+\mathbf{H}^{\mathrm{wp}};\,
+\mathbf{r}
+\right]\right),
+\label{eq:chap4-fusion-gate}
+\end{equation}
+其中 \([\cdot;\cdot;\cdot]\) 表示沿特征维拼接。最终融合结果为
+\begin{equation}
+\mathbf{H}^{\mathrm{fuse}}
+=\mathbf{H}^{\mathrm{time}}+\mathbf{G}\odot\mathbf{H}^{\mathrm{wp}}.
+\label{eq:chap4-fusion}
+\end{equation}
+式（\ref{eq:chap4-fusion}）说明，小波包分支不是对时域分支的简单替代，而是作为与预测跨度相关的残差增强项注入主干表示。这一机制使模型能够根据任务难度与步长尺度动态调整局部频带信息的注入强度。  
 
-在完成时频融合后，模型沿用第三章的统一跨模态流程：一方面，冻结大语言模型生成的变量级语义嵌入经 \texttt{prompt\_encoder} 适配后作为语义先验；另一方面，融合后的时频表示与语义嵌入在多头 CMA 中完成跨模态对齐，并通过自适应头融合和残差插值构成最终编码表示。最后，解码器对该表示进一步建模，经线性层将通道维映射到预测步长维，输出未来 \(L_{\text{pred}}\) 个时间步的多变量预测结果。整体流程可概括为：输入序列经小波包分解形成多路子带，各子带在统一通道空间中独立编码并通过注意力池化压缩为变量级向量，再通过跨注意力与时域特征融合，最终结合语义先验完成预测。
+完成时频融合后，模型继续沿用第三章的统一语义增强流程。冻结大语言模型生成的变量级语义嵌入先经过 \texttt{prompt\_encoder} 编码，得到语义先验 \(\mathbf{H}^{\mathrm{sem}}\)。然后，融合后的时频表示与语义先验在 CMA 模块中执行跨模态对齐：
+\begin{equation}
+\mathbf{H}^{\mathrm{cma}}
+=\mathrm{CMA}\!\left(
+\mathbf{H}^{\mathrm{fuse}},\,
+\mathbf{H}^{\mathrm{sem}},\,
+\mathbf{H}^{\mathrm{sem}}
+\right).
+\label{eq:chap4-cma}
+\end{equation}
+在此基础上，模型将 \(\mathbf{H}^{\mathrm{cma}}\) 输入解码器，并通过线性映射将通道维投影到预测步长维，得到最终预测输出：
+\begin{equation}
+\hat{\mathbf{Y}}
+=\mathrm{Proj}\!\left(
+\mathrm{Decoder}\left(\mathbf{H}^{\mathrm{cma}}\right)
+\right)
+\in\mathbb{R}^{B\times L_{\mathrm{pred}}\times N}.
+\label{eq:chap4-output}
+\end{equation}
+最后，再通过 RevIN 的反归一化步骤恢复到原始数值尺度。  
+
+综合来看，第四章模型可以概括为“归一化输入 $\rightarrow$ 可学习小波包分解 $\rightarrow$ 子带级编码与池化 $\rightarrow$ 步长感知门控融合 $\rightarrow$ 语义对齐与解码预测”的五阶段流程。其中，小波包分支负责显式建模局部多尺度结构，时域主干负责保留原始时间依赖，语义分支负责补充变量层面的外部先验，而门控融合与 CMA 则承担不同模态之间的协同建模任务。该结构既继承了第三章统一骨架的整体稳定性，又通过局部多尺度分解机制增强了对尖峰、突变和高波动片段的刻画能力。
 
 \section{实验设置与结果分析}
 

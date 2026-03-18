@@ -26,16 +26,19 @@ def data_provider(args, flag):
     if not data_file.endswith('.csv') and data_file not in ['ETTh1', 'ETTh2', 'ETTm1', 'ETTm2']:
         data_file += '.csv'
 
-    data_set = Data(
-        root_path='./dataset/',
-        data_path=data_file,
-        flag=flag,
-        size=[args.seq_len, 0, args.pred_len],
-        features='M',
-        num_nodes=args.num_nodes,
-        scale=True,
-        embed_version=args.embed_version
-    )
+    dataset_kwargs = {
+        'root_path': './dataset/',
+        'data_path': data_file,
+        'flag': flag,
+        'size': [args.seq_len, 0, args.pred_len],
+        'features': 'M',
+        'scale': True,
+        'embed_version': args.embed_version,
+    }
+    if Data is not Dataset_Custom:
+        dataset_kwargs['num_nodes'] = args.num_nodes
+
+    data_set = Data(**dataset_kwargs)
     data_loader = DataLoader(data_set, batch_size=args.batch_size, shuffle=(flag != 'test'), num_workers=4, drop_last=True)
     return data_set, data_loader
 
