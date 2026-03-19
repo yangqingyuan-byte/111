@@ -60,7 +60,17 @@
 \mathbf{H}^{\text{cma}} = \mathrm{CMA}(\mathbf{H}^{\text{tf}}, \mathbf{H}^{\text{sem}}, \mathbf{H}^{\text{sem}}).
 \label{eq:chap3-cma}
 \end{equation}
-不同头的输出再经 \texttt{AdaptiveDynamicHeadsCMA} 做自适应加权，随后通过残差插值得到最终的跨模态联合表示 \(\mathbf{H}^{\text{cross}}\)。  
+之所以引入该模块，是因为时频融合特征主要反映数值序列内部的动态模式，而语义特征则携带变量名称、物理含义及潜在关系等外部先验信息。若仅采用简单拼接或线性叠加，模型难以显式区分“哪些语义信息与当前变量相关”“哪些语义信息对当前预测步长更重要”。因此，本文采用以时频表示为查询、以语义先验为键和值的跨模态注意力结构，使时序分支能够主动从语义空间中检索与当前预测任务最匹配的辅助信息。
+
+图~\ref{fig:chap3-cross-modal-alignment} 给出了跨模态注意力对齐部分的内部结构。该模块以时频融合特征作为查询项，以冻结大语言模型生成的语义先验作为键和值，通过多个并行注意力头完成时序模态与语义模态之间的相关性建模。不同注意力头可从不同子空间刻画变量语义与时序表示之间的对应关系，从而增强联合表示对多粒度相关性的表达能力。
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.74\textwidth]{Img/chap3_cross_modal_alignment.png}
+  \bicaption{跨模态注意力对齐模块示意图}{Illustration of the cross-modal attention alignment module}
+  \label{fig:chap3-cross-modal-alignment}
+\end{figure}
+
+不同头的输出再经 \texttt{AdaptiveDynamicHeadsCMA} 做自适应加权，随后通过残差插值得到最终的跨模态联合表示 \(\mathbf{H}^{\text{cross}}\)。其中，自适应头融合模块会根据当前样本的表示状态为各个 CMA 头分配不同权重，以抑制冗余头或噪声头的影响，并突出更具判别性的跨模态对齐结果。最终得到的 \(\mathbf{H}^{\text{cross}}\) 一方面保留了时域与频域分支的数值结构信息，另一方面吸收了语义先验中与变量语义和预测目标相关的外部知识，从而为后续解码器提供更加稳健的联合表征。  
 
 （6）\textbf{解码与预测头（Decoder and Head）}：最终，联合表示 \(\mathbf{H}^{\text{cross}}\) 被送入 Transformer 解码器，并通过线性层映射到预测步长维度：
 \begin{equation}

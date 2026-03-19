@@ -68,6 +68,12 @@
 \else% if double-sided printing isn't enabled
 	\LoadClass[UTF8,a4paper,oneside,zihao=-4]{ctexbook}
 \fi
+\ctexset{
+	chapter = {
+		lofskip = 0pt,
+		lotskip = 0pt
+	}
+}
 %---------------------------------------------------------------------------%
 %->> Required packages
 %---------------------------------------------------------------------------%
@@ -708,4 +714,3 @@
 	\fi
 }
 \endinput
-

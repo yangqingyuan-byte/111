@@ -96,7 +96,7 @@ Transformer 通过自注意力机制直接建模序列中任意位置之间的�
 在预训练阶段，Transformer 通常采用自回归语言建模或掩码语言建模两类目标学习通用表示。前者强调根据历史上下文预测下一个 token，适合生成式任务；后者通过恢复被遮蔽内容学习双向上下文表示，更适合理解类任务。本文引入 Qwen3 作为语义先验来源，正是建立在 Transformer 具备良好上下文建模和知识迁移能力这一基础之上。
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.78\textwidth]{Img/gpt2_architecture_overview.png}
+  \includegraphics[width=0.54\textwidth]{Img/gpt2_architecture_overview.png}
   \bicaption{GPT-2 small 架构示意图}{Illustration of the GPT-2 small architecture}
   \label{fig:chap2-gpt2-architecture}
 \end{figure}
@@ -107,7 +107,7 @@ Transformer 通过自注意力机制直接建模序列中任意位置之间的�
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.82\textwidth]{Img/qwen_architecture_overview.png}
+  \includegraphics[width=0.58\textwidth]{Img/qwen_architecture_overview.png}
   \bicaption{Qwen3-0.6B 架构示意图}{Illustration of the Qwen3-0.6B architecture}
   \label{fig:chap2-qwen-architecture}
 \end{figure}
@@ -262,6 +262,15 @@ d_k^{(j+1)}=\sum_{n} g[n-2k]x_n^{(j)}
 \end{equation}
 其中 \(\mathbf{G}^{(h)}\) 由对应头的输入独立生成，从而实现\textbf{头特定（head-specific）}的门控调制。  
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{Img/gated_attention_comparison.png}
+  \bicaption{传统注意力与门控注意力对比示意图}{Comparison between conventional attention and gated attention}
+  \label{fig:chap2-gated-attention-comparison}
+\end{figure}
+
+如图~\ref{fig:chap2-gated-attention-comparison} 所示，传统注意力通常直接将注意力权重作用于值向量并输出聚合结果，而门控注意力在此基础上进一步引入由输入驱动的门值，对不同位置或不同通道的信息流进行选择性缩放。该结构使模型不仅能够“关注哪里”，还能够进一步决定“保留多少”，因此在复杂上下文、多模态交互以及长序列建模场景下通常具有更强的特征筛选能力。
+
 从作用机理上看，门控注意力的优势主要体现在三个方面：其一，门控为注意力输出提供了额外的输入依赖非线性，有助于压制无关上下文；其二，门控可以减轻注意力过度集中和大激活值问题，提升训练稳定性；其三，该结构实现简单，易于与多模态融合和频域增强模块结合。本文在第三章利用门控思想完成多头跨模态输出的自适应融合，并在后续章节进一步扩展到时域和频域编码层中。
 
 \section{数据集介绍}
@@ -302,4 +311,8 @@ ILI & 7 & $\{24, 36, 48, 60\}$ & $(617, 74, 170)$ & 周度 & 公共卫生 \\
 表\ref{tab:chap2-datasets}对本文实验所使用数据集的维度、预测长度、数据划分规模、采样频率以及应用领域进行了汇总。其中，数据集划分规模按照训练集、验证集和测试集的顺序给出。除 ILI 数据集采用 $\{24,36,48,60\}$ 作为预测长度外，其余数据集均采用 $\{96,192,336,720\}$ 作为统一预测步长设置。
 \subsection{数据预处理方法}
 
-为保证不同模型之间的可比性，本文对所有数据集采用统一预处理流程。首先，按照时间顺序划分训练集、验证集和测试集，避免未来信息泄漏。其次，在模型内部使用 RevIN 进行按变量归一化与反归一化，以减小量纲差异和分布漂移带来的影响。再次，采用滑动窗口方式构造样本对，主要设置历史窗口 \(L=96\)，预测步长 \(H\in\{96,192,336,720\}\)。对于带有时间戳的数据集，额外提取小时、星期或月份等周期性时间特征作为辅助输入。统一的数据处理流程保证了后续实验结果具有良好的可复现性和横向可比性。
+为保证不同模型之间的可比性，本文对所有数据集采用统一的数据预处理流程。首先，按照时间顺序划分训练集、验证集和测试集，避免未来信息泄漏。其次，在模型内部使用 RevIN 进行按变量归一化与反归一化，以减小量纲差异和分布漂移带来的影响。再次，采用滑动窗口方式构造输入输出样本对。对于 ETTm1、ETTm2、ETTh1、ETTh2、Weather 和 Exchange 六个数据集，统一设置历史窗口长度为 \(L=96\)，预测步长为 \(H\in\{96,192,336,720\}\)，以评估模型在标准长程预测场景下的表现。
+
+需要说明的是，ILI 数据集的时间粒度为周度，整体样本规模显著小于其余数据集，若仍采用与高频数据集相同的超长预测设置，将导致有效训练样本数量不足，并明显加剧长程外推难度。因此，本文对 ILI 数据集采用单独的窗口配置：输入历史长度设为 \(L=36\)，预测步长设为 \(H\in\{24,36,48,60\}\)。其中，这四组预测长度分别对应较短、中等和较长的周度预测范围，更符合 ILI 数据集的采样频率与任务特点，也与现有公开时间序列预测工作中的常见设置保持一致。
+
+对于带有时间戳的数据集，本文进一步提取小时、星期、月份等周期性时间特征作为辅助输入，以帮助模型建模潜在的时间周期规律。总体而言，除 ILI 在输入窗口和预测步长上采用专门设置外，其余数据集均遵循统一的标准长程预测预处理流程，从而保证了后续实验结果具有良好的可复现性与横向可比性。
