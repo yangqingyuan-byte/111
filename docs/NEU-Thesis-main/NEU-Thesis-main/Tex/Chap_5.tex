@@ -221,30 +221,7 @@ h^{\mathrm{horizon}}_{b,n,1}
 
 为凸显本章方法的特点，本文选取了原始基座模型、无频域增强的统一框架以及若干具有代表性的长程预测基线作为对比对象。结果表中同时给出 MSE 与 MAE 两项指标，但分析时以 MAE 为主，因为本章的核心目标在于验证可学习的全局频谱建模是否能够更有效地降低平均绝对误差并改善长期预测稳定性。训练细节如优化器、学习率、batch size 与早停策略均与前文保持一致。
 
-为便于说明对比方法的代表性，表\ref{tab:chap5-baselines}汇总了本章主要基线模型的发表年份、刊物或会议以及对应的学术层次。其中，TimeCMA 和 TimeLLM 代表了近年来将大语言模型引入时间序列预测的研究路线\cite{liu2025timecma,jin2024timellm}；UniTime 则进一步强调跨领域统一建模\cite{liu2024unitime}；iTransformer、TimesNet、PatchTST 与 DLinear 分别代表变量反转注意力、二维时序建模、patch 化 Transformer 和纯线性建模等不同范式\cite{liu2024itransformer,wu2023timesnet,nie2023patchtst,zeng2023are}。这些方法覆盖了近年来基于大模型迁移、统一建模、纯线性建模以及 Transformer 结构改进等不同技术路线，能够较全面地反映当前长程时间序列预测任务中的主流方法谱系，也与相关综述对模型类别的归纳基本一致\cite{wen2023transformers,chen2025transformercn}。
-
-\begin{table}[!htbp]
-\centering
-\small
-\setlength{\tabcolsep}{7pt}
-\renewcommand{\arraystretch}{1.05}
-\bicaption{第五章主要对比模型信息}{Main baseline models used in Chapter 5}
-\label{tab:chap5-baselines}
-\begin{tabular}{c|c|c|c}
-\toprule
-\textbf{模型名称} & \textbf{年份} & \textbf{发表刊物/会议} & \textbf{水平层次} \\
-\midrule
-T3time & 2026 & AAAI & CCF-A类会议 \\
-TimeCMA & 2025 & AAAI & CCF-A类会议 \\
-TimeLLM & 2024 & ICLR & CCF-A类会议 \\
-UniTime & 2024 & WWW & CCF-A类会议 \\
-iTransformer & 2024 & ICLR & CCF-A类会议 \\
-TimesNet & 2023 & ICLR & CCF-A类会议 \\
-DLinear & 2023 & AAAI & CCF-A类会议 \\
-PatchTST & 2023 & ICLR & CCF-A类会议 \\
-\bottomrule
-\end{tabular}
-\end{table}
+由于本章采用的主要对比模型与第四章保持一致，其代表性与技术路线划分已在第四章“实验设置与对比基线”部分说明，此处不再重复列表。其中，TimeCMA、TimeLLM 与 UniTime 分别代表近年来将大语言模型或统一建模引入时间序列预测的研究路线\cite{liu2025timecma,jin2024timellm,liu2024unitime}；iTransformer、TimesNet、PatchTST 与 DLinear 则分别对应变量反转注意力、二维时序建模、patch 化 Transformer 和纯线性建模等不同范式\cite{liu2024itransformer,wu2023timesnet,nie2023patchtst,zeng2023are}。这些方法覆盖了大模型迁移、统一建模、纯线性建模以及 Transformer 结构改进等不同技术路线，能够较全面地反映当前长程时间序列预测任务中的主流方法谱系，也与相关综述对模型类别的归纳基本一致\cite{wen2023transformers,chen2025transformercn}。
 
 在明确对比对象之后，下面将从主结果表现、长期趋势形态以及关键模块作用三个角度，对融合频域前馈网络方法的有效性与适用场景进行分析。其中，主结果部分重点关注 MAE 及长预测步长下的整体误差表现，以突出全局频域建模在长期趋势预测中的优势。
 
