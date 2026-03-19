@@ -1,0 +1,96 @@
+<mxfile host="app.diagrams.net" modified="2026-03-18T20:35:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="chap4-wpd-cn" name="Wavelet Packet Decomposition CN">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="图 4.2 两层小波包分解及子频带结构示意图" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry x="520" y="20" width="760" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="input_box" value="输入序列&#xa;X" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="90" y="410" width="170" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="input_wave" value="原始时序波形&#xa;长期趋势 + 周期变化 + 局部扰动" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="55" y="540" width="240" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="stage1" value="第 1 层小波包分解" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="80" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a1" value="近似分量&#xa;A1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="280" width="170" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d1" value="细节分量&#xa;D1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="560" width="170" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a1_note" value="保留较平滑的低频信息" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="390" y="390" width="210" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d1_note" value="保留较明显的高频变化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="390" y="670" width="210" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="stage2" value="第 2 层小波包分解" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="80" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="aa" value="AA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="190" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="ad" value="AD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="360" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="da" value="DA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="530" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="dd" value="DD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="700" width="140" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="aa_note" value="最低频子带&#xa;对应长期趋势" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="960" y="180" width="220" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="ad_note" value="低频变化子带&#xa;对应缓慢波动与周期变化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="960" y="350" width="220" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="da_note" value="中高频子带&#xa;对应局部振荡与短时波动" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="960" y="520" width="220" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="dd_note" value="最高频子带&#xa;对应尖峰、突变与噪声细节" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#b85450;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="960" y="690" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="legend" value="说明：&#xa;小波包分解与普通小波分解的区别在于，近似分量和细节分量都会继续向下递归分解。&#xa;因此模型可以同时获得低频趋势、低频变化、中高频波动和高频细节四类子频带表示。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="300" width="420" height="180" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="input_box" target="a1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="input_box" target="d1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="edge3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="a1" target="aa">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="a1" target="ad">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="d1" target="da">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="d1" target="dd">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

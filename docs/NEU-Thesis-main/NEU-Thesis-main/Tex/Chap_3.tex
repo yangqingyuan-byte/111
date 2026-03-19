@@ -38,14 +38,14 @@
 
 （3）\textbf{语义分支（Semantic Branch）}：与直接在训练过程中调用大语言模型不同，本文采用外部冻结语言模型生成的变量级语义嵌入作为语义先验输入。记外部嵌入经转置后为
 \begin{equation}
-\mathbf{E}' = \mathbf{E}^{\top} \in \mathbb{R}^{B\times C\times d_{\text{LLM}}},
+\mathbf{E}' = \mathbf{E}^{\top} \in \mathbb{R}^{B\times C\times d_{\text{LLM}}}
 \label{eq:chap3-semantic-embedding}
 \end{equation}
 再通过轻量级 \texttt{prompt\_encoder} 做结构适配，得到语义特征 \(\mathbf{H}^{\text{sem}}\)。语言模型主体保持冻结，仅以外部语义先验形式参与后续跨模态对齐。  
 
 （4）\textbf{时频融合机制（Time-Frequency Fusion）}：基座模型中的时域分支与频域分支并非通过复杂的跨注意力结构进行交互，而是采用一种与预测步长相关的轻量门控机制。设时域表示和频域表示在转置后分别为 \(\bar{\mathbf{H}}^{\text{time}}, \bar{\mathbf{H}}^{\text{freq}}\in\mathbb{R}^{B\times d_{\text{ts}}\times C}\)，则模型根据时域编码结果和预测步长 \(H\) 计算门控权重
 \begin{equation}
-\mathbf{G}^{\text{hor}} = f_{\text{hor}}(\bar{\mathbf{H}}^{\text{time}}, H)\in\mathbb{R}^{B\times d_{\text{ts}}\times 1},
+\mathbf{G}^{\text{hor}} = f_{\text{hor}}(\bar{\mathbf{H}}^{\text{time}}, H)\in\mathbb{R}^{B\times d_{\text{ts}}\times 1}
 \label{eq:chap3-horizon-gate}
 \end{equation}
 并完成融合
@@ -64,9 +64,12 @@
 
 （6）\textbf{解码与预测头（Decoder and Head）}：最终，联合表示 \(\mathbf{H}^{\text{cross}}\) 被送入 Transformer 解码器，并通过线性层映射到预测步长维度：
 \begin{equation}
-\mathbf{Z}^{\text{dec}} = \mathrm{TFDecoder}(\mathbf{H}^{\text{cross}}, \mathbf{H}^{\text{cross}}),\quad
-\hat{\mathbf{Y}}^{\text{norm}} = \mathrm{Linear}_{d_{\text{ts}}\rightarrow H}(\mathbf{Z}^{\text{dec}}).
-\label{eq:chap3-decoder-head}
+\mathbf{Z}^{\text{dec}} = \mathrm{TFDecoder}(\mathbf{H}^{\text{cross}}, \mathbf{H}^{\text{cross}})
+\label{eq:chap3-decoder}
+\end{equation}
+\begin{equation}
+\hat{\mathbf{Y}}^{\text{norm}} = \mathrm{Linear}_{d_{\text{ts}}\rightarrow H}(\mathbf{Z}^{\text{dec}})
+\label{eq:chap3-prediction-head}
 \end{equation}
 经 RevIN 反归一化后，模型输出最终预测结果 \(\hat{\mathbf{Y}}\in\mathbb{R}^{B\times H\times C}\)。  
 
@@ -103,25 +106,37 @@
 
 \textbf{（1）注意力加权池化。} 设某一分支输出的序列表示为 \(\mathbf{H}\in\mathbb{R}^{B\times L\times C}\)（\(B\) 为 batch、\(L\) 为序列长度、\(C\) 为通道维），需在长度维 \(L\) 上聚合为单一向量。采用可学习的注意力池化：先通过小型前馈网络将每个时间步映射为标量得分，再经 Softmax 归一化得到注意力权重，最后对序列做加权求和：  
 \begin{equation}
-\mathbf{a} = \mathrm{Softmax}\bigl(f_{\text{attn}}(\mathbf{H})\bigr)\in\mathbb{R}^{B\times L\times 1},\quad
-\mathbf{h}_{\text{pooled}} = \sum_{t=1}^{L} a_t\,\mathbf{H}_{:,t,:} \in \mathbb{R}^{B\times C}.
+\mathbf{a} = \mathrm{Softmax}\bigl(f_{\text{attn}}(\mathbf{H})\bigr)\in\mathbb{R}^{B\times L\times 1}
+\label{eq:chap3-attention-score}
+\end{equation}
+\begin{equation}
+\mathbf{h}_{\text{pooled}} = \sum_{t=1}^{L} a_t\,\mathbf{H}_{:,t,:} \in \mathbb{R}^{B\times C}
 \label{eq:chap3-attention-pooling}
 \end{equation}
 其中 \(f_{\text{attn}}\) 通常为两层 MLP。在后续改进模型中，该池化既可用于子带级表示压缩，也可用于频域增强后的全局序列聚合。  
 
 \textbf{（2）门控机制与 SDPA 输出门控。} 在第四章和第五章的改进模型中，时域或频域分支内部进一步采用带门控的 Transformer 编码层（GatedTransformerEncoderLayer）。对每一层，记归一化后的输入为 \(\tilde{\mathbf{X}}\)，自注意力输出为 \(\mathbf{O}_{\text{attn}}\)，则门控后的输出为  
 \begin{equation}
-\mathbf{G} = \sigma\bigl(\mathbf{W}_g\,\tilde{\mathbf{X}}\bigr),\quad
-\mathbf{O}_{\text{out}} = \mathbf{O}_{\text{attn}} \odot \mathbf{G},
+\mathbf{G} = \sigma\bigl(\mathbf{W}_g\,\tilde{\mathbf{X}}\bigr)
+\label{eq:chap3-gated-attention-gate}
+\end{equation}
+\begin{equation}
+\mathbf{O}_{\text{out}} = \mathbf{O}_{\text{attn}} \odot \mathbf{G}
 \label{eq:chap3-gated-attention}
 \end{equation}
 其中 \(\mathbf{W}_g\) 为可学习线性层，\(\sigma\) 为 Sigmoid 函数，\(\odot\) 为逐元素乘法。该结构通过输入依赖门控抑制无关上下文，并为后续频域增强模型提供更稳定的特征输入。  
 
 \textbf{（3）多头跨模态输出的门控融合。} 在跨模态对齐阶段，框架使用多个独立的 CMA 头（CrossModal），每个头输出变量级特征。为融合多头信息并避免冗余，采用自适应门控融合模块（AdaptiveDynamicHeadsCMA）：将各头输出在通道维拼接后，通过小型 MLP 为每个头生成标量门控分数，经 Softmax 归一化后对多头输出进行加权求和：  
 \begin{equation}
-\mathbf{Z} = \mathrm{Concat}\bigl(\mathbf{H}^{\text{cma}}_1,\dots,\mathbf{H}^{\text{cma}}_H\bigr),\quad
-\mathbf{g} = \mathrm{Softmax}\bigl(f_{\text{gate}}(\mathbf{Z})\bigr),\quad
-\mathbf{H}^{\text{cma}}_{\text{fused}} = \sum_{h=1}^{H} g_h\,\mathbf{H}^{\text{cma}}_h.
+\mathbf{Z} = \mathrm{Concat}\bigl(\mathbf{H}^{\text{cma}}_1,\dots,\mathbf{H}^{\text{cma}}_H\bigr)
+\label{eq:chap3-head-concat}
+\end{equation}
+\begin{equation}
+\mathbf{g} = \mathrm{Softmax}\bigl(f_{\text{gate}}(\mathbf{Z})\bigr)
+\label{eq:chap3-head-gate}
+\end{equation}
+\begin{equation}
+\mathbf{H}^{\text{cma}}_{\text{fused}} = \sum_{h=1}^{H} g_h\,\mathbf{H}^{\text{cma}}_h
 \label{eq:chap3-head-fusion}
 \end{equation}
 该操作等价于在“头”维度上的门控池化，可自适应突出更相关的跨模态头。综上，该模块通过注意力压缩和门控融合获得更紧凑、稳定的变量级表示。
@@ -136,9 +151,9 @@
 
 实验比较对象主要包括原始基座模型、去除关键模块的简化版本，以及加入冻结语义分支和跨模态对齐后的完整统一框架。这样能够保证后续第四章和第五章的改进主要聚焦于频域增强模块本身。
 
-\subsection{Qwen3-1.4B 与 GPT-2 的对比实验}
+\subsection{Qwen3-0.6B 与 GPT-2 的对比实验}
 
-为验证选择 Qwen3 作为语义骨干的合理性，可在统一框架下比较“统一框架 + GPT-2 嵌入”与“统一框架 + Qwen3 嵌入”两组模型，保持时域分支、频域分支、CMA 结构和训练超参数一致，仅替换外部语义嵌入来源。该实验的目的在于考察不同语义先验与时间序列建模框架的匹配程度，而非单纯比较模型规模。
+第二章已经从模型结构与预训练特性角度分析了 Qwen3-0.6B 相较于 GPT-2 的潜在优势，即前者在长上下文建模、数值稳定性与语义表示质量方面更适合作为冻结的外部语义编码器。本节进一步在统一预测骨架下对这一判断进行实验验证。具体而言，比较“统一框架 + GPT-2 嵌入”与“统一框架 + Qwen3-0.6B 嵌入”两组模型，保持时域分支、频域分支、CMA 结构和训练超参数一致，仅替换外部语义嵌入来源。该实验的目的在于考察不同语义先验与时间序列建模框架的匹配程度，而非单纯比较模型规模。
 
 \subsection{门控注意力机制的有效性验证}
 

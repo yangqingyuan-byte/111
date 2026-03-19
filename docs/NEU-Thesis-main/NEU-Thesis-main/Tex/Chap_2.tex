@@ -5,15 +5,17 @@
 时间序列数据是按照时间顺序采集的一组观测值，通常表示为一维标量序列 \(\{x_t\}_{t=1}^T\) 或多维向量序列 \(\{\mathbf{x}_t\}_{t=1}^T\)，其中 \(t\) 表示时间步，\(T\) 为序列长度。对于单变量时间序列，有 \(x_t \in \mathbb{R}\)；对于多元时间序列，有 \(\mathbf{x}_t \in \mathbb{R}^C\)，其中 \(C\) 表示通道（变量）数。时间序列通常同时包含长期趋势、季节性（周期性）、局部波动以及随机噪声等成分，这些成分在时间轴上叠加并相互作用，使得对其进行建模与预测具有较高难度。通过从历史观测中挖掘这些潜在模式，可以为需求规划、资源调度、风险预警和策略制定提供关键支持。  
 
 一般地，时间序列预测（Time Series Forecasting, TSF）的目标是利用历史观测值估计未来一段时间内的序列取值，可形式化为从过去窗口到未来窗口的映射。对于单变量时间序列预测问题，给定长度为 \(p\) 的历史窗口 \(\{x_{t-p}, \dots, x_t\}\)，预测未来 \(h\) 个时间步的取值可写为  
-\[
- \hat{x}_{t+1:t+h} = f_\theta\bigl(x_{t-p:t}\bigr),
-\]
+\begin{equation}
+ \hat{x}_{t+1:t+h} = f_\theta\bigl(x_{t-p:t}\bigr)
+\label{eq:chap2-01}
+\end{equation}
 其中 \(f_\theta(\cdot)\) 表示由参数 \(\theta\) 控制的预测模型，\(\hat{x}_{t+1:t+h} = (\hat{x}_{t+1}, \dots, \hat{x}_{t+h})\)。当 \(h=1\) 时为单步预测（single-step），关注一步前的短期预测；当 \(h>1\) 时为多步预测（multi-step），需要同时考虑误差在时间上的累积效应。  
 
 在多元时间序列预测（Multivariate Time Series Forecasting, MTSF）中，模型同时利用多个相关变量的历史信息。设 \(\mathbf{X}_{t-p:t} = [\mathbf{x}_{t-p}, \dots, \mathbf{x}_t]^\top \in \mathbb{R}^{(p+1)\times C}\) 表示过去 \(p+1\) 个时间步的多元观测矩阵，\(\hat{\mathbf{X}}_{t+1:t+h} \in \mathbb{R}^{h\times C}\) 表示未来 \(h\) 个时间步的多元预测，则有  
-\[
+\begin{equation}
  \hat{\mathbf{X}}_{t+1:t+h} = f_\theta\bigl(\mathbf{X}_{t-p:t}\bigr)。
-\]
+\label{eq:chap2-02}
+\end{equation}
 与单变量情形相比，多元建模可以显式利用不同通道之间的相关性与协同关系，在能源、交通、金融等场景中往往能够获得更高的预测精度，但同时也带来了更高的维度、建模复杂度以及过拟合风险。  
 
 从预测时间跨度的角度，时间序列预测可粗略分为短期时间序列预测（Short-Term Time Series Forecasting, STSF）和长期时间序列预测（Long-Term Time Series Forecasting, LTSF）。前者通常对应较小的 \(h\)，用于实时控制、库存管理等需要快速响应的场景，对近期局部模式的建模能力要求更高；后者则对应较大的 \(h\)，往往需要模型在较长时间范围内同时把握长期趋势与多尺度周期结构，对模型的表达能力、误差累积控制以及泛化性能提出更高要求。本文聚焦的多元长程时间序列预测任务，即是在上述 MTSF 框架下、针对较大预测步长 \(h\) 的情形，对模型在复杂动态与长程依赖条件下的建模能力进行系统研究。
@@ -21,36 +23,42 @@
 \subsection{时间序列预测问题定义}
 
 形式上，时间序列预测可以视为从过去观测窗口到未来预测窗口的映射学习问题。设给定的数据集为  
-\[
-\mathcal{D} = \bigl\{ \mathbf{X}^{(n)}_{1:T_n} \bigr\}_{n=1}^N,
-\]
+\begin{equation}
+\mathcal{D} = \bigl\{ \mathbf{X}^{(n)}_{1:T_n} \bigr\}_{n=1}^N
+\label{eq:chap2-03}
+\end{equation}
 其中第 \(n\) 个样本为长度为 \(T_n\) 的多元时间序列 \(\mathbf{X}^{(n)}_{1:T_n} = \{\mathbf{x}^{(n)}_t\}_{t=1}^{T_n}\)，\(\mathbf{x}^{(n)}_t \in \mathbb{R}^C\)。在给定预测步长 \(h\) 和历史窗口长度 \(p\) 的情况下，多元长程时间序列预测任务可定义为：对任意时间索引 \(t\)（满足 \(p \le t \le T_n-h\)），利用历史窗口  
-\[
+\begin{equation}
 \mathbf{X}^{(n)}_{t-p:t} = [\mathbf{x}^{(n)}_{t-p}, \dots, \mathbf{x^{(n)}_t}]^\top \in \mathbb{R}^{(p+1)\times C}
-\]
+\label{eq:chap2-04}
+\end{equation}
 预测未来 \(h\) 个时间步的序列  
-\[
-\hat{\mathbf{X}}^{(n)}_{t+1:t+h} = f_\theta\bigl(\mathbf{X}^{(n)}_{t-p:t}\bigr) \in \mathbb{R}^{h\times C},
-\]
+\begin{equation}
+\hat{\mathbf{X}}^{(n)}_{t+1:t+h} = f_\theta\bigl(\mathbf{X}^{(n)}_{t-p:t}\bigr) \in \mathbb{R}^{h\times C}
+\label{eq:chap2-05}
+\end{equation}
 其中 \(f_\theta : \mathbb{R}^{(p+1)\times C} \to \mathbb{R}^{h\times C}\) 为带参数的预测模型，\(\theta\) 表示待学习的参数。训练阶段的目标是利用训练集 \(\mathcal{D}_{\mathrm{train}}\) 最小化某一损失函数（如 MSE 或 MAE）在所有样本与时间位置上的经验风险，即  
-\[
-\min_{\theta} \; \mathcal{L}(\theta) = \frac{1}{|\mathcal{S}|} \sum_{(n,t)\in \mathcal{S}} \ell\!\left(\hat{\mathbf{X}}^{(n)}_{t+1:t+h}, \mathbf{X}^{(n)}_{t+1:t+h}\right),
-\]
+\begin{equation}
+\min_{\theta} \; \mathcal{L}(\theta) = \frac{1}{|\mathcal{S}|} \sum_{(n,t)\in \mathcal{S}} \ell\!\left(\hat{\mathbf{X}}^{(n)}_{t+1:t+h}, \mathbf{X}^{(n)}_{t+1:t+h}\right)
+\label{eq:chap2-06}
+\end{equation}
 其中 \(\mathcal{S}\) 表示所有可用的样本–时间对索引集合，\(\ell(\cdot,\cdot)\) 为逐样本损失函数。推理阶段，在给定新的历史窗口 \(\mathbf{X}_{t-p:t}\) 的情况下，模型根据学习得到的参数 \(\hat{\theta}\) 输出对应的未来预测 \(\hat{\mathbf{X}}_{t+1:t+h} = f_{\hat{\theta}}(\mathbf{X}_{t-p:t})\)。在后续小节中，本文将围绕 MSE 与 MAE 两种常用评价指标的数学特性与适用场景，对上述损失函数 \(\ell(\cdot,\cdot)\) 进行更为细致的讨论。
 \subsection{两种评价指标的数学特性与适用场景}
 
 在时间序列预测任务中，均方误差（Mean Squared Error, MSE）和平均绝对误差（Mean Absolute Error, MAE）是最常用的两类评价指标，它们从不同角度刻画预测值与真实值之间的偏差，对模型训练目标与应用场景均具有重要影响。设在某一数据集上共有 \(N\) 个样本，每个样本对应预测区间内共有 \(H\) 个时间步、\(C\) 个变量，真实值与预测值分别记为 \(\mathbf{Y}\in\mathbb{R}^{N\times H\times C}\)、\(\hat{\mathbf{Y}}\in\mathbb{R}^{N\times H\times C}\)，其中 \(\mathbf{Y}_{n,h,c}\)、\(\hat{\mathbf{Y}}_{n,h,c}\) 表示第 \(n\) 个样本在第 \(h\) 个时间步、第 \(c\) 个通道上的真实值与预测值。  
 
 \textbf{（1）均方误差（MSE）的定义与特性。} MSE 定义为  
-\[
+\begin{equation}
 \mathrm{MSE} = \frac{1}{NHC}\sum_{n=1}^{N}\sum_{h=1}^{H}\sum_{c=1}^{C}\bigl(\hat{\mathbf{Y}}_{n,h,c}-\mathbf{Y}_{n,h,c}\bigr)^2。
-\]
+\label{eq:chap2-07}
+\end{equation}
 从统计学角度看，MSE 等价于误差项的二阶矩估计，在假设噪声服从零均值高斯分布时，对应于最大似然意义下的最优估计量。其一大特点是对大误差更加敏感：平方运算会显著放大少数极端偏差样本在整体损失中的权重，因此在训练阶段采用 MSE 作为目标函数时，模型会倾向于优先压制大幅偏离点，从而降低整体误差方差。这一性质使 MSE 特别适用于对大偏差高度敏感的场景，例如电力负荷峰值预测、金融风险控制以及对安全性要求较高的工业过程监控等。然而，MSE 对异常值同样较为敏感，当数据中存在较多噪声或离群点时，可能导致模型过度拟合局部异常，从而影响对整体分布的刻画。  
 
 \textbf{（2）平均绝对误差（MAE）的定义与特性。} MAE 定义为  
-\[
+\begin{equation}
 \mathrm{MAE} = \frac{1}{NHC}\sum_{n=1}^{N}\sum_{h=1}^{H}\sum_{c=1}^{C}\bigl|\hat{\mathbf{Y}}_{n,h,c}-\mathbf{Y}_{n,h,c}\bigr|。
-\]
+\label{eq:chap2-08}
+\end{equation}
 从稳健统计的角度来看，MAE 对应于误差服从拉普拉斯分布时的最大似然估计，其梯度大小在误差幅值增大时保持常数，不会像 MSE 那样随误差平方增长。因此，MAE 对异常值相对不敏感，更侧重于整体的平均偏差水平，能够在存在噪声和局部异常的情况下提供更稳健的性能评估。MAE 的另一个优点在于其量纲与原始数据一致，便于直接解释，为业务方理解“平均误差大约为多少物理量单位”提供直观参考，适用于对整体预测偏差水平敏感、但允许少量大误差存在的应用场景，例如长期趋势预测、资源规划和高噪声环境下的粗粒度预估等。  
 
 \textbf{（3）两类指标的互补性与适用场景。} 由于 MSE 与 MAE 在误差放大机制上的差异，二者在度量模型性能时往往呈现互补特性：在同一模型与数据集上，若 MSE 显著高于 MAE，通常意味着误差分布中存在少量幅度较大的“尾部”样本；反之，当两者数值接近时，则表明误差整体分布较为均匀。在模型训练时选择不同指标作为优化目标，会引导模型在不同方向上进行权衡：以 MSE 为主的优化更强调大误差惩罚，适合需要严格控制极端偏差的高风险场景；以 MAE 为主的优化则更注重整体平均水平的稳健性，更适合关注整体表现而对少数异常点容忍度较高的任务。  
@@ -62,24 +70,51 @@
 大语言模型（Large Language Model, LLM）是以 Transformer 为基础、在大规模语料上通过自监督任务预训练得到的神经网络模型，典型代表包括 GPT、BERT、T5 等。其核心优势在于能够通过统一的上下文表示学习获得较强的语义抽象、知识迁移和跨任务泛化能力，并已从文本处理扩展到图像、语音和时间序列等多模态场景。对本文而言，LLM 的价值主要不在于直接替代时序模型，而在于提供高质量语义先验，辅助多变量关系建模和跨模态融合。
 
 从形式上看，LLM 可以视为对 token 序列条件概率的建模。给定输入序列 \(\mathbf{w}=(w_1,\dots,w_L)\)，模型通过嵌入层和若干 Transformer 块得到隐藏表示，并通过自回归或掩码重构目标进行训练，其典型损失为
-\[
+\begin{equation}
 \mathcal{L}_{\text{LM}}(\theta) = - \sum_{t} \log p_\theta(w_t \mid \mathbf{w}_{< t}) \quad \text{或} \quad - \sum_{t\in \mathcal{M}} \log p_\theta(w_t \mid \mathbf{w}_{\setminus t}).
-\]
-在时间序列场景中，迁移 LLM 能力的关键在于连续数值表示与语言表示之间的桥接，即通过量化、编码或模态对齐将时间序列映射到可与语言空间交互的表示，再结合任务结构设计实现有效融合。本文采用的做法是将冻结大模型作为外部语义编码器，为后续预测网络提供变量级语义嵌入。
+\label{eq:chap2-09}
+\end{equation}
+在时间序列场景中，迁移 LLM 能力的关键在于连续数值表示与语言表示之间的桥接，即通过量化、编码或模态对齐将时间序列映射到可与语言空间交互的表示，再结合任务结构设计实现有效融合。本文采用的做法是将冻结的大语言模型作为外部语义编码器，为后续预测网络提供变量级语义先验嵌入。
 \subsection{Transformer 架构与预训练机制}
 
 Transformer 通过自注意力机制直接建模序列中任意位置之间的依赖关系，是当前大语言模型的核心基础架构。给定输入表示 \(\mathbf{H}\in\mathbb{R}^{L\times d}\)，其注意力计算可写为
-\[
-\mathrm{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V})=\mathrm{Softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^{\top}}{\sqrt{d_k}}\right)\mathbf{V},
-\]
+\begin{equation}
+\mathrm{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V})=\mathrm{Softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^{\top}}{\sqrt{d_k}}\right)\mathbf{V}
+\label{eq:chap2-10}
+\end{equation}
 其中 \(\mathbf{Q},\mathbf{K},\mathbf{V}\) 由输入线性映射得到。多头机制通过在不同子空间并行计算注意力，提高了模型对局部模式、长程依赖和语义关系的联合刻画能力。配合位置编码、前馈网络、残差连接与归一化结构，Transformer 能够形成稳定而高效的深层序列建模框架。
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{Img/transformer_architecture_overview.png}
+  \bicaption{Transformer 架构示意图}{Illustration of the Transformer architecture}
+  \label{fig:chap2-transformer-architecture}
+\end{figure}
+
+如图~\ref{fig:chap2-transformer-architecture} 所示，Transformer 通常由输入嵌入、位置编码、多头自注意力、前馈网络以及残差归一化模块堆叠构成。其核心思想是在每一层中先通过自注意力完成全局依赖建模，再通过前馈网络对局部特征进行非线性变换，从而在保持并行计算能力的同时有效刻画长程上下文关系。这一结构优势也是后续 GPT、BERT、Qwen 等大语言模型能够持续扩展模型容量和上下文长度的重要基础。
+
 在预训练阶段，Transformer 通常采用自回归语言建模或掩码语言建模两类目标学习通用表示。前者强调根据历史上下文预测下一个 token，适合生成式任务；后者通过恢复被遮蔽内容学习双向上下文表示，更适合理解类任务。本文引入 Qwen3 作为语义先验来源，正是建立在 Transformer 具备良好上下文建模和知识迁移能力这一基础之上。
-\subsection{Qwen3-1.4B 模型架构分析}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\textwidth]{Img/gpt2_architecture_overview.png}
+  \bicaption{GPT-2 small 架构示意图}{Illustration of the GPT-2 small architecture}
+  \label{fig:chap2-gpt2-architecture}
+\end{figure}
 
-本文选用 Qwen3-1.4B 作为外部语义编码器，用于生成变量级文本描述对应的语义嵌入，而非将数值时间序列直接输入大模型进行端到端训练。Qwen3-1.4B 属于小规模稠密解码器模型，在参数规模可控的前提下保留了较强的表示能力，适合作为冻结语义先验来源。
+如图~\ref{fig:chap2-gpt2-architecture} 所示，原始基线模型 T3Time 在语义分支中采用的是标准 GPT-2 small 作为外部语义编码器，其主体为解码器式 Transformer 堆叠结构，包含 12 层 Transformer block，隐藏维度为 768。在本文的实验设定中，GPT-2 主要承担“原始语义骨干”与“对照基线”的角色，用于刻画改进前统一预测骨架所依赖的语义表示来源。
 
-从结构上看，Qwen3-1.4B 采用自回归 Transformer 解码器架构，并结合 GQA、SwiGLU、RoPE、RMSNorm 和 QK-Norm 等设计，在推理效率、长上下文建模和训练稳定性之间取得了较好平衡。对本文而言，其主要优势在于能够提供质量较高的语义嵌入，同时避免端到端微调大模型所带来的额外计算开销，因此适合作为统一预测骨架中的外部语义支撑模块。
+在明确基线语义骨干之后，本文进一步将其替换为 Qwen3-0.6B，以考察更先进的大语言模型表示能否进一步提升统一预测骨架中的跨模态建模效果。相较于基线所使用的 GPT-2，Qwen3-0.6B 属于更新一代的轻量级稠密解码器模型，在参数规模仍然可控的前提下保留了更强的语义表示能力，因此更适合作为本文方法中的冻结语义先验来源。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{Img/qwen_architecture_overview.png}
+  \bicaption{Qwen3-0.6B 架构示意图}{Illustration of the Qwen3-0.6B architecture}
+  \label{fig:chap2-qwen-architecture}
+\end{figure}
+
+如图~\ref{fig:chap2-qwen-architecture} 所示，Qwen3-0.6B 整体上延续了解码器式 Transformer 的主干结构，并在注意力、位置编码、归一化与前馈网络等关键位置采用更加适合长上下文建模与高效推理的结构设计。从结构上看，Qwen3-0.6B 采用自回归 Transformer 解码器架构，并结合 GQA、SwiGLU、RoPE、RMSNorm 和 QK-Norm 等设计，在推理效率、长上下文建模和训练稳定性之间取得了较好平衡。其中，GQA（Grouped Query Attention）通过让多个查询头共享较少数量的键值头，在尽量保持注意力表达能力的同时降低了推理阶段的键值缓存开销；SwiGLU 则在前馈网络中引入带门控的非线性激活结构，相较于传统激活函数通常具有更好的表达能力与训练稳定性。RoPE（Rotary Positional Embedding）通过旋转位置编码将相对位置信息注入注意力计算过程，有助于增强模型对长上下文顺序关系的刻画能力。RMSNorm 以均方根归一化替代标准 LayerNorm，在保持归一化效果的同时简化了计算过程；QK-Norm 则对 Query 和 Key 的表示尺度进行归一化约束，以缓解注意力分数波动过大的问题并提升训练稳定性。上述设计共同构成了 Qwen3-0.6B 在效率、上下文建模能力与数值稳定性之间取得平衡的重要基础。
+
+与基线模型所采用的 GPT-2 相比，Qwen3-0.6B 在模型设计与预训练能力上都更具先进性：前者注意力结构、位置编码与归一化方式相对基础，更强调通用文本生成能力；后者则在长上下文建模、数值稳定性与推理效率方面进行了系统优化。对于本文所研究的多元时间序列预测任务而言，我们并不直接依赖大语言模型生成预测值，而是将其作为冻结的外部语义编码器，用于提供变量级描述和任务背景的语义先验。在这一使用范式下，语义表示的区分性、稳健性和迁移能力比生成能力本身更为重要。基于这一考虑，本文在保留统一预测骨架其余部分不变的前提下，将基线模型中的 GPT-2 语义骨干替换为 Qwen3-0.6B，并在第三章中进一步通过对比实验验证这一替换所带来的实际收益。
 
 \section{时间序列频域分析理论}
 
@@ -88,17 +123,20 @@ Transformer 通过自注意力机制直接建模序列中任意位置之间的�
 \subsection{傅里叶变换及其局限性}
 
 傅里叶变换是最经典的频域分析工具之一，其基本思想是将时间序列表示为一系列不同频率正弦和余弦函数的叠加。对于连续时间信号 \(x(t)\)，其连续傅里叶变换定义为  
-\[
-X(\omega) = \int_{-\infty}^{+\infty} x(t)\, e^{-j\omega t}\,\mathrm{d}t,
-\]
+\begin{equation}
+X(\omega) = \int_{-\infty}^{+\infty} x(t)\, e^{-j\omega t}\,\mathrm{d}t
+\label{eq:chap2-11}
+\end{equation}
 其中 \(\omega\) 为角频率，\(X(\omega)\) 表示信号在频率 \(\omega\) 处的复数谱值。对于长度为 \(T\) 的离散时间序列 \(\{x_t\}_{t=0}^{T-1}\)，常用的离散傅里叶变换（Discrete Fourier Transform, DFT）定义为  
-\[
-X(k) = \sum_{t=0}^{T-1} x_t\, e^{-j 2\pi kt / T}, \quad k = 0,1,\dots,T-1,
-\]
+\begin{equation}
+X(k) = \sum_{t=0}^{T-1} x_t\, e^{-j 2\pi kt / T}, \quad k = 0,1,\dots,T-1
+\label{eq:chap2-12}
+\end{equation}
 其逆变换为  
-\[
+\begin{equation}
 x_t = \frac{1}{T}\sum_{k=0}^{T-1} X(k)\, e^{j 2\pi kt / T}, \quad t = 0,1,\dots,T-1。
-\]
+\label{eq:chap2-13}
+\end{equation}
 在实际应用中，快速傅里叶变换（Fast Fourier Transform, FFT）可以在 \(O(T\log T)\) 时间内高效计算 DFT，从而广泛应用于频谱估计、滤波和周期性分析等任务。通过观测幅度谱 \(|X(k)|\) 与功率谱 \(|X(k)|^2\)，可以识别序列中的主要频率成分及其能量分布，为后续的特征构造与模型设计提供重要先验。  
 
 尽管傅里叶变换在刻画全局周期结构方面具有坚实的理论基础和良好性能，但其在处理真实复杂时间序列时也存在若干局限性：第一，傅里叶基函数在整个时间轴上具有全局支撑，频谱表示缺乏时间局部性，难以刻画“何时”发生频率变化，即对非平稳或局部突变序列的时变特性表达能力有限；第二，傅里叶变换本质上假设信号在分析窗口内是平稳或近似平稳的，当序列统计特性随时间显著变化时，单一全局频谱难以反映局部结构差异；第三，标准傅里叶变换主要刻画幅度与相位信息，对于具有显著非线性、多尺度和间歇性特征的复杂信号，需要配合额外的时频局部化工具（如短时傅里叶变换、小波变换、小波包分解等）才能更全面地刻画其结构；第四，在深度学习框架下，直接在频域上进行操作时，如何在频谱稀疏性、相位信息利用与可微性之间取得平衡，也会对模型设计提出额外挑战。  
@@ -106,13 +144,45 @@ x_t = \frac{1}{T}\sum_{k=0}^{T-1} X(k)\, e^{j 2\pi kt / T}, \quad t = 0,1,\dots,
 基于上述原因，许多面向时间序列预测的频域方法往往并非仅依赖单一傅里叶变换，而是将其与小波（包）分解、频域前馈网络以及时域注意力/卷积结构相结合，一方面利用傅里叶频谱捕捉全局周期成分，另一方面通过更灵活的时频局部化手段增强对局部突变与多尺度结构的刻画。本文在第四、五章中分别引入小波包分解与频域前馈网络，正是试图在傅里叶频域分析的基础上，进一步缓解上述局限性，为多元长程时间序列预测提供更具表达力的时频建模框架。
 \subsection{小波包分解原理}
 
-为克服傅里叶变换缺乏时间局部性的不足，小波及其变体提供了一种兼具时域与频域局部化能力的时频分析工具。标准离散小波变换（Discrete Wavelet Transform, DWT）通过一组尺度函数 \(\varphi(t)\) 与小波函数 \(\psi(t)\) 在不同尺度 \(j\) 和位移 \(k\) 上的伸缩和平移，将信号分解为一系列近似系数和细节系数：  
-\[
-x(t) = \sum_{k} a_{J,k}\,\varphi_{J,k}(t) + \sum_{j=1}^{J}\sum_{k} d_{j,k}\,\psi_{j,k}(t),
-\]
-其中 \(\varphi_{J,k}(t) = 2^{-J/2}\varphi(2^{-J}t-k)\)、\(\psi_{j,k}(t) = 2^{-j/2}\psi(2^{-j}t-k)\)，系数 \(a_{J,k}\) 和 \(d_{j,k}\) 分别通过对原始信号与对应基函数的内积得到。对离散时间序列而言，DWT 可通过正交滤波器组实现：每一层对输入序列先后通过低通滤波器和高通滤波器，并在滤波后进行下采样，从而得到低频近似分量与高频细节分量。  
+为克服傅里叶变换缺乏时间局部性的不足，小波及其变体提供了一种兼具时域与频域局部化能力的时频分析工具。小波分析的基本思想是通过尺度函数 \(\varphi(t)\) 提取信号的低频近似部分，通过小波函数 \(\psi(t)\) 提取局部高频细节，从而在不同尺度上同时刻画趋势与波动。对应地，尺度函数与小波函数满足如下两尺度方程
+\begin{equation}
+\varphi(t)=\sqrt{2}\sum_{n\in\mathbb{Z}} h[n]\varphi(2t-n)
+\label{eq:chap2-14}
+\end{equation}
+\begin{equation}
+\psi(t)=\sqrt{2}\sum_{n\in\mathbb{Z}} g[n]\varphi(2t-n)
+\label{eq:chap2-15}
+\end{equation}
+其中，\(h[n]\) 与 \(g[n]\) 分别表示低通分析滤波器和高通分析滤波器的离散系数序列。前者用于保留信号中的缓慢变化趋势，后者用于提取边缘、突变及高频振荡等局部结构。
 
-然而，标准小波变换仅继续分解低频部分，对高频细节的表达有限。小波包分解（WPD）进一步对高频与低频分量同时递归分解，从而在第 \(j\) 层得到 \(2^j\) 个子带序列 \(\{w^{(j,b)}_t\}\)。相比 DWT，WPD 能更细致地描述中高频结构，更适合含有局部突变和复杂波动的时间序列。
+在连续形式下，信号 \(x(t)\) 可由尺度基与小波基共同展开为
+\begin{equation}
+x(t)=\sum_{k} a_{J,k}\varphi_{J,k}(t)+\sum_{j=1}^{J}\sum_{k} d_{j,k}\psi_{j,k}(t)
+\label{eq:chap2-16}
+\end{equation}
+其中，\(a_{J,k}\) 表示粗尺度下的近似系数，\(d_{j,k}\) 表示不同尺度上的细节系数。该表达式说明小波分析本质上是在多尺度框架下对信号进行“趋势 + 细节”的分层表示。
+
+对离散时间序列而言，离散小波变换可由正交滤波器组实现。设第 \(j\) 层输入序列为 \(\mathbf{x}^{(j)}=\{x_n^{(j)}\}\)，则其低频近似分量与高频细节分量分别可写为
+\begin{equation}
+a_k^{(j+1)}=\sum_{n} h[n-2k]x_n^{(j)}
+\label{eq:chap2-17}
+\end{equation}
+\begin{equation}
+d_k^{(j+1)}=\sum_{n} g[n-2k]x_n^{(j)}
+\label{eq:chap2-18}
+\end{equation}
+式（\ref{eq:chap2-17}）和式（\ref{eq:chap2-18}）表明，离散小波分解可以理解为“滤波 + 下采样”的联合过程：低通支路保留信号的整体趋势与慢变化成分，高通支路则提取局部突变、边缘以及高频振荡信息。  
+
+然而，标准离散小波变换通常只继续分解低频近似部分，对高频细节的刻画仍然较为粗略。小波包分解（Wavelet Packet Decomposition, WPD）则进一步同时递归分解低频分量和高频分量，从而在第 \(j\) 层得到 \(2^j\) 个子带序列。若记第 \(j\) 层第 \(b\) 个子带为 \(\mathbf{w}^{(j,b)}\)，则递归分解过程可概括为
+\begin{equation}
+\mathbf{w}^{(j+1,2b-1)}=\mathcal{H}\!\left(\mathbf{w}^{(j,b)}\right)
+\label{eq:chap2-19}
+\end{equation}
+\begin{equation}
+\mathbf{w}^{(j+1,2b)}=\mathcal{G}\!\left(\mathbf{w}^{(j,b)}\right)
+\label{eq:chap2-20}
+\end{equation}
+其中，\(\mathcal{H}(\cdot)\) 和 \(\mathcal{G}(\cdot)\) 分别表示低通滤波下采样算子和高通滤波下采样算子。相比 DWT，WPD 能更细致地描述中高频结构，因此更适合含有局部突变、多尺度波动和复杂非平稳特征的时间序列。
 
 在本文中，多元时间序列的每个通道分别进行多层小波包分解，得到多尺度子带序列，并将其作为后续时频融合模块的输入。这样既保留了时间顺序信息，也显式强化了不同频段的能量分布表示，为第四章的局部波动增强建模提供基础。
 
@@ -121,24 +191,28 @@ x(t) = \sum_{k} a_{J,k}\,\varphi_{J,k}(t) + \sum_{j=1}^{J}\sum_{k} d_{j,k}\,\psi
 在频域视角下，时间序列可以通过离散傅里叶变换映射为一组复数频谱系数，从而将原本在时域中较难直接建模的长期周期性与全局模式转化为在频率轴上的能量分布与相位关系。传统深度模型多在时域上通过卷积或自注意力建模局部与长程依赖，而频域神经网络（尤其是频域多层感知机，Frequency-domain MLP, FreMLP）则尝试直接在频谱空间中进行特征变换与通道交互，利用频域的能量集中性（energy compaction）与全局视角，构建更高效的时序建模机制[FreTS]。  
 
 一般而言，对长度为 \(L\) 的多元时间序列 \(\mathbf{X}\in\mathbb{R}^{B\times L\times C}\)（\(B\) 为批大小，\(C\) 为通道数），沿时间维进行一维快速傅里叶变换（FFT），可得到复数频谱表示  
-\[
-\mathbf{F} = \mathcal{F}(\mathbf{X}) = \mathrm{FFT}(\mathbf{X}, \text{dim}=1) \in \mathbb{C}^{B\times L'\times C},
-\]
+\begin{equation}
+\mathbf{F} = \mathcal{F}(\mathbf{X}) = \mathrm{FFT}(\mathbf{X}, \text{dim}=1) \in \mathbb{C}^{B\times L'\times C}
+\label{eq:chap2-freq-fft}
+\end{equation}
 其中 \(L' = \lfloor L/2\rfloor + 1\)（对应实序列的半谱）。记 \(\mathbf{F} = \Re(\mathbf{F}) + j\,\Im(\mathbf{F})\)，则频域神经网络的核心思想是在实部与虚部上分别施加可学习的线性变换与非线性映射，从而在频域中显式建模不同变量之间、不同频率分量之间的联合关系。以本文采用的 FreMLP 形式为例，将 \(\mathbf{F}\) 视作形状为 \([B,L',C]\) 的复值张量，对每个频率位置上的通道维进行复线性变换：  
-\[
+\begin{equation}
 \begin{aligned}
  \mathbf{O}_{\text{real}} &= \sigma\!\bigl(\Re(\mathbf{F})\,\mathbf{W}_r - \Im(\mathbf{F})\,\mathbf{W}_i + \mathbf{b}_r\bigr),\\
- \mathbf{O}_{\text{imag}} &= \sigma\!\bigl(\Im(\mathbf{F})\,\mathbf{W}_r + \Re(\mathbf{F})\,\mathbf{W}_i + \mathbf{b}_i\bigr),
+ \mathbf{O}_{\text{imag}} &= \sigma\!\bigl(\Im(\mathbf{F})\,\mathbf{W}_r + \Re(\mathbf{F})\,\mathbf{W}_i + \mathbf{b}_i\bigr)
 \end{aligned}
-\]
+\label{eq:chap2-freq-complex-mlp}
+\end{equation}
 其中 \(\mathbf{W}_r,\mathbf{W}_i \in \mathbb{R}^{C\times C}\) 为可学习的实权重矩阵，\(\mathbf{b}_r,\mathbf{b}_i\in\mathbb{R}^{C}\) 为偏置，\(\sigma(\cdot)\) 为逐点非线性激活（如 ReLU）。上述结构等价于对每个频率上的通道向量施加一个复值仿射变换，从而在频域中显式建模变量间的全局交互。随后可将实部和虚部重新组合为复数：  
-\[
-\mathbf{G} = \mathbf{O}_{\text{real}} + j\,\mathbf{O}_{\text{imag}},
-\]
+\begin{equation}
+\mathbf{G} = \mathbf{O}_{\text{real}} + j\,\mathbf{O}_{\text{imag}}
+\label{eq:chap2-freq-recombine}
+\end{equation}
 并通过逆快速傅里叶变换（IFFT）回到时域：  
-\[
-\hat{\mathbf{X}} = \mathcal{F}^{-1}(\mathbf{G}) = \mathrm{IFFT}(\mathbf{G}, \text{dim}=1),
-\]
+\begin{equation}
+\hat{\mathbf{X}} = \mathcal{F}^{-1}(\mathbf{G}) = \mathrm{IFFT}(\mathbf{G}, \text{dim}=1)
+\label{eq:chap2-freq-ifft}
+\end{equation}
 从而得到经频域 MLP 变换后的时域特征。由于 FFT/IFFT 均为可微操作，上述过程可以无缝嵌入端到端深度网络中进行联合训练。  
 
 为增强频域特征的稀疏性与鲁棒性，可进一步对复值输出施加 soft-shrink 等稀疏化算子，并结合门控机制在时域与频域之间进行自适应融合。本文第五章正是在这一思路下，将基础频域分支替换为基于 FreMLP 的频域前馈网络，以加强对全局周期结构和跨变量频谱关系的建模。
@@ -148,9 +222,10 @@ x(t) = \sum_{k} a_{J,k}\,\varphi_{J,k}(t) + \sum_{j=1}^{J}\sum_{k} d_{j,k}\,\psi
 \subsection{传统注意力机制的局限性}
 
 自注意力机制（Scaled Dot-Product Attention, SDPA）是 Transformer 及大语言模型中的核心算子，其通过对查询（Query）、键（Key）、值（Value）之间的相似度进行加权求和来聚合上下文信息。对单个注意力头而言，给定查询矩阵 \(\mathbf{Q}\in\mathbb{R}^{L_q\times d_k}\)、键矩阵 \(\mathbf{K}\in\mathbb{R}^{L_k\times d_k}\)、值矩阵 \(\mathbf{V}\in\mathbb{R}^{L_k\times d_v}\)，标准缩放点积注意力可写为  
-\[
-\mathrm{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V}) = \underbrace{\mathrm{Softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}\right)}_{\mathbf{A}}\mathbf{V},
-\]
+\begin{equation}
+\mathrm{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V}) = \underbrace{\mathrm{Softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}\right)}_{\mathbf{A}}\mathbf{V}
+\label{eq:chap2-gated-base-attention}
+\end{equation}
 其中 \(\mathbf{A}\in\mathbb{R}^{L_q\times L_k}\) 为注意力权重矩阵。尽管该机制在捕捉长程依赖方面表现出色，但在大模型和长上下文场景下也暴露出若干局限性：  
 
 （1）\textbf{注意力分布过度集中的 “attention sink” 现象。} 实证研究表明，在预训练后的大模型中，某些特定位置（例如序列的首 token 或部分标点等“非信息性” token）容易在多层多头注意力中获得异常高的注意力权重，即“注意力汇聚”或“attention sink”现象[Gu et al., 2024]。这会导致大量上下文信息被无效地聚集到少数位置，降低注意力在有用上下文间的分辨能力，影响模型对细粒度模式的建模。  
@@ -166,21 +241,25 @@ x(t) = \sum_{k} a_{J,k}\,\varphi_{J,k}(t) + \sum_{j=1}^{J}\sum_{k} d_{j,k}\,\psi
 \subsection{门控注意力的数学原理与优势}
 
 门控注意力（Gated Attention）在标准注意力输出之上引入可学习的门控函数，通过对不同位置、不同注意力头的输出施加输入依赖的缩放因子，实现对信息流的精细控制。以对缩放点积注意力输出进行逐元素门控为例，记标准注意力输出为  
-\[
-\mathbf{H} = \mathrm{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V}) \in \mathbb{R}^{L_q\times d_v},
-\]
+\begin{equation}
+\mathbf{H} = \mathrm{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V}) \in \mathbb{R}^{L_q\times d_v}
+\label{eq:chap2-gated-attention-output}
+\end{equation}
 门控注意力在此基础上引入一个非线性映射  
-\[
-\mathbf{G} = \sigma\bigl(f_{\phi}(\mathbf{X})\bigr) \in (0,1)^{L_q\times d_v},
-\]
+\begin{equation}
+\mathbf{G} = \sigma\bigl(f_{\phi}(\mathbf{X})\bigr) \in (0,1)^{L_q\times d_v}
+\label{eq:chap2-gated-attention-gate}
+\end{equation}
 并得到门控后的输出  
-\[
-\tilde{\mathbf{H}} = \mathbf{G} \odot \mathbf{H},
-\]
+\begin{equation}
+\tilde{\mathbf{H}} = \mathbf{G} \odot \mathbf{H}
+\label{eq:chap2-gated-attention-fused}
+\end{equation}
 其中 \(\mathbf{X}\) 通常取为当前层的查询输入或其线性变换，\(f_{\phi}(\cdot)\) 为带参数的前馈网络或线性映射，\(\sigma(\cdot)\) 为 Sigmoid 等压缩到 \((0,1)\) 区间的非线性函数，\(\odot\) 表示逐元素乘法。对于多头注意力，可在每个头上分别引入独立的门控：  
-\[
-\tilde{\mathbf{H}}^{(h)} = \mathbf{G}^{(h)} \odot \mathbf{H}^{(h)}, \quad h=1,\dots,H,
-\]
+\begin{equation}
+\tilde{\mathbf{H}}^{(h)} = \mathbf{G}^{(h)} \odot \mathbf{H}^{(h)}, \quad h=1,\dots,H
+\label{eq:chap2-gated-attention-headwise}
+\end{equation}
 其中 \(\mathbf{G}^{(h)}\) 由对应头的输入独立生成，从而实现\textbf{头特定（head-specific）}的门控调制。  
 
 从作用机理上看，门控注意力的优势主要体现在三个方面：其一，门控为注意力输出提供了额外的输入依赖非线性，有助于压制无关上下文；其二，门控可以减轻注意力过度集中和大激活值问题，提升训练稳定性；其三，该结构实现简单，易于与多模态融合和频域增强模块结合。本文在第三章利用门控思想完成多头跨模态输出的自适应融合，并在后续章节进一步扩展到时域和频域编码层中。
@@ -190,7 +269,37 @@ x(t) = \sum_{k} a_{J,k}\,\varphi_{J,k}(t) + \sum_{j=1}^{J}\sum_{k} d_{j,k}\,\psi
 为了系统评估本文提出的多元长程时间序列预测框架及其各个时频增强模块，本章选取了覆盖工业能耗、电力负荷、气象环境、公共卫生与金融市场等多种典型场景的公开基准数据集，并在统一的划分与预处理策略下进行对比实验。合理的数据集选择与规范的数据处理流程对于保证实验结论的客观性与可复现性至关重要，因此本节首先对所使用的数据集进行简要描述，随后介绍具体的数据划分方式与预处理步骤。
 \subsection{数据集描述}
 
-本文选取 ETTm1、ETTm2、ETTh1、ETTh2、ECL、Weather、ILI 和 Exchange 八个公开数据集进行评估，覆盖工业能耗、电力负荷、气象环境、公共卫生和金融市场等典型场景。ETT 系列用于检验模型对工业负荷与温度变化的长期预测能力；ECL 侧重高维电力负荷建模；Weather 用于考察复杂周期性和多变量相关性；ILI 与 Exchange 则分别反映公共卫生和金融时间序列中的长期波动与非平稳特征。上述数据集在采样频率、变量维度和波动特性上差异明显，能够较全面地验证模型的泛化性能。
+本文选取 ETTm1、ETTm2、ETTh1、ETTh2、Weather、ILI 和 Exchange 七个公开数据集进行评估，覆盖工业能耗、电力负荷、气象环境、公共卫生和金融市场等典型场景。ETT 系列用于检验模型对工业负荷与温度变化的长期预测能力；Weather 用于考察复杂周期性和多变量相关性；ILI 与 Exchange 则分别反映公共卫生和金融时间序列中的长期波动与非平稳特征。上述数据集在采样频率、变量维度和波动特性上差异明显，能够较全面地验证模型的泛化性能。
+
+\begin{table*}[!htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{0.9}
+\bicaption{本文实验所用数据集统计信息}{Statistics of the datasets used in this thesis}
+\label{tab:chap2-datasets}
+\begin{tabular}{c|c|c|c|c|c}
+\toprule
+\textbf{数据集} & \textbf{维度} & \textbf{预测长度} & \textbf{数据集划分规模} & \textbf{采样频率} & \textbf{应用领域} \\
+\midrule
+ETTm1 & 7 & $\{96, 192, 336, 720\}$ & $(34465, 11521, 11521)$ & 15 分钟 & 电力 \\
+\midrule
+ETTm2 & 7 & $\{96, 192, 336, 720\}$ & $(34465, 11521, 11521)$ & 15 分钟 & 电力 \\
+\midrule
+ETTh1 & 7 & $\{96, 192, 336, 720\}$ & $(8545, 2881, 2881)$ & 1 小时 & 电力 \\
+\midrule
+ETTh2 & 7 & $\{96, 192, 336, 720\}$ & $(8545, 2881, 2881)$ & 1 小时 & 电力 \\
+\midrule
+Weather & 21 & $\{96, 192, 336, 720\}$ & $(36792, 5271, 10540)$ & 10 分钟 & 气象 \\
+\midrule
+Exchange & 8 & $\{96, 192, 336, 720\}$ & $(5120, 665, 1422)$ & 日度 & 汇率 \\
+\midrule
+ILI & 7 & $\{24, 36, 48, 60\}$ & $(617, 74, 170)$ & 周度 & 公共卫生 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+表\ref{tab:chap2-datasets}对本文实验所使用数据集的维度、预测长度、数据划分规模、采样频率以及应用领域进行了汇总。其中，数据集划分规模按照训练集、验证集和测试集的顺序给出。除 ILI 数据集采用 $\{24,36,48,60\}$ 作为预测长度外，其余数据集均采用 $\{96,192,336,720\}$ 作为统一预测步长设置。
 \subsection{数据预处理方法}
 
 为保证不同模型之间的可比性，本文对所有数据集采用统一预处理流程。首先，按照时间顺序划分训练集、验证集和测试集，避免未来信息泄漏。其次，在模型内部使用 RevIN 进行按变量归一化与反归一化，以减小量纲差异和分布漂移带来的影响。再次，采用滑动窗口方式构造样本对，主要设置历史窗口 \(L=96\)，预测步长 \(H\in\{96,192,336,720\}\)。对于带有时间戳的数据集，额外提取小时、星期或月份等周期性时间特征作为辅助输入。统一的数据处理流程保证了后续实验结果具有良好的可复现性和横向可比性。
