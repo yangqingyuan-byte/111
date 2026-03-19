@@ -1,0 +1,141 @@
+第一章参考文献核对清单
+说明：以下条目按第一章正文中“首次出现顺序”排列，便于你逐段核对。
+说明：为方便人工检查，我保留了文献标题和网址链接；链接均已去掉协议前缀。
+
+1. Time-series forecasting with deep learning: a survey
+链接：doi.org/10.1098/rsta.2020.0209
+
+2. 深度学习在时空序列预测中的应用综述
+链接：kns.cnki.net/kcms2/article/abstract?v=HqqB0nZ4i3cfv_SBgz7Ff6s1-Ln_A8x2IQB9_jjxxnJsElLI4u1oXkH8rS47CTz0yNEQrxm2jvQ49r8X3VrY4fvL_H7n_ZrP6-7Qx3qy4VCJLZ4OfG6ehcV8AF2gx5Sn&uniplatform=NZKPT
+
+3. Transformers in time series: A survey
+链接：doi.org/10.24963/ijcai.2023/759
+
+4. Statistical Forecasting for Inventory Control
+链接：scholar.google.com/scholar?q=Statistical+Forecasting+for+Inventory+Control+Robert+G.+Brown
+
+5. Forecasting seasonals and trends by exponentially weighted moving averages
+链接：scholar.google.com/scholar?q=Forecasting+seasonals+and+trends+by+exponentially+weighted+moving+averages+Charles+C.+Holt
+
+6. Forecasting sales by exponentially weighted moving averages
+链接：doi.org/10.1287/mnsc.6.3.324
+
+7. Time Series Analysis: Forecasting and Control
+链接：scholar.google.com/scholar?q=Time+Series+Analysis%3A+Forecasting+and+Control+Box+Jenkins+Reinsel+Ljung
+
+8. Finding structure in time
+链接：scholar.google.com/scholar?q=Finding+structure+in+time+Jeffrey+L.+Elman
+
+9. Long short-term memory
+链接：doi.org/10.1162/neco.1997.9.8.1735
+
+10. Learning phrase representations using RNN encoder-decoder for statistical machine translation
+链接：scholar.google.com/scholar?q=Learning+phrase+representations+using+RNN+encoder-decoder+for+statistical+machine+translation
+
+11. Gradient-based learning applied to document recognition
+链接：scholar.google.com/scholar?q=Gradient-based+learning+applied+to+document+recognition
+
+12. Attention is all you need
+链接：scholar.google.com/scholar?q=Attention+is+all+you+need
+
+13. Informer: Beyond efficient transformer for long sequence time-series forecasting
+链接：doi.org/10.1609/aaai.v35i12.17325
+
+14. Autoformer: Decomposition transformers with auto-correlation for long-term series forecasting
+链接：scholar.google.com/scholar?q=Autoformer%3A+Decomposition+transformers+with+auto-correlation+for+long-term+series+forecasting
+
+15. FEDformer: Frequency enhanced decomposed transformer for long-term series forecasting
+链接：scholar.google.com/scholar?q=FEDformer%3A+Frequency+enhanced+decomposed+transformer+for+long-term+series+forecasting
+
+16. Are transformers effective for time series forecasting?
+链接：doi.org/10.1609/aaai.v37i9.26317
+
+17. One fits all: Power general time series analysis by pretrained LM
+链接：doi.org/10.52202/075280-1877
+
+18. LLM4TS: Aligning pre-trained LLMs as data-efficient time-series forecasters
+链接：doi.org/10.1145/3719207
+
+19. Time-LLM: Time series forecasting by reprogramming large language models
+链接：arxiv.org/abs/2310.01728
+
+20. Empowering time series analysis with large language models: A survey
+链接：doi.org/10.24963/ijcai.2024/895
+
+21. Chronos: Learning the language of time series
+链接：www.amazon.science/publications/chronos-learning-the-language-of-time-series
+
+22. ImageBind: One embedding space to bind them all
+链接：scholar.google.com/scholar?q=ImageBind%3A+One+embedding+space+to+bind+them+all
+
+23. Support-vector networks
+链接：scholar.google.com/scholar?q=Support-vector+networks+Cortes+Vapnik
+
+24. Support vector regression machines
+链接：scholar.google.com/scholar?q=Support+vector+regression+machines+Drucker+Burges+Kaufman+Smola+Vapnik
+
+25. Classification and Regression Trees
+链接：scholar.google.com/scholar?q=Classification+and+Regression+Trees+Breiman+Friedman+Olshen+Stone
+
+26. Random forests
+链接：scholar.google.com/scholar?q=Random+forests+Leo+Breiman
+
+27. Greedy function approximation: A gradient boosting machine
+链接：doi.org/10.1214/aos/1013203451
+
+28. Nearest neighbor pattern classification
+链接：doi.org/10.1109/TIT.1967.1053964
+
+29. 基于SVR的非线性时间序列预测方法应用综述
+链接：scholar.google.com/scholar?q=%E5%9F%BA%E4%BA%8ESVR%E7%9A%84%E9%9D%9E%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97%E9%A2%84%E6%B5%8B%E6%96%B9%E6%B3%95%E5%BA%94%E7%94%A8%E7%BB%BC%E8%BF%B0
+
+30. 基于深度学习的时间序列预测方法综述
+链接：doi.org/10.19304/J.ISSN1000-7180.2022.0725
+
+31. Learning representations by back-propagating errors
+链接：doi.org/10.1038/323533a0
+
+32. Learning long-term dependencies with gradient descent is difficult
+链接：scholar.google.com/scholar?q=Learning+long-term+dependencies+with+gradient+descent+is+difficult
+
+33. Dilated recurrent neural networks
+链接：scholar.google.com/scholar?q=Dilated+recurrent+neural+networks
+
+34. A dual-stage attention-based recurrent neural network for time series prediction
+链接：scholar.google.com/scholar?q=A+dual-stage+attention-based+recurrent+neural+network+for+time+series+prediction
+
+35. A multi-horizon quantile recurrent forecaster
+链接：www.amazon.science/publications/a-multi-horizon-quantile-recurrent-forecaster
+
+36. WaveNet: A generative model for raw audio
+链接：arxiv.org/abs/1609.03499
+
+37. An empirical evaluation of generic convolutional and recurrent networks for sequence modeling
+链接：arxiv.org/abs/1803.01271
+
+38. Diffusion convolutional recurrent neural network: Data-driven traffic forecasting
+链接：openreview.net/forum?id=SJiHXGWAZ
+
+39. Temporal pattern attention for multivariate time series forecasting
+链接：doi.org/10.1007/s10994-019-05815-0
+
+40. 基于Transformer的时间序列预测方法综述
+链接：www.jsjkx.com/CN/10.11896/jsjkx.240500043
+
+41. Enhancing the locality and breaking the memory bottleneck of transformer on time series forecasting
+链接：proceedings.neurips.cc/paper_files/paper/2019/hash/6775a0635c302542da2cafe6c67e926f-Abstract.html
+
+42. Reformer: The efficient transformer
+链接：openreview.net/forum?id=rkgNKkHtvB
+
+43. Pyraformer: Low-complexity pyramidal attention for long-range time series modeling and forecasting
+链接：openreview.net/forum?id=0EXmFzUn5I
+
+44. Non-stationary transformers: Exploring the stationarity in time series forecasting
+链接：openreview.net/forum?id=ucNDIDRNjjv
+
+45. 基于大语言模型的电力系统预测技术研究综述
+链接：www.pgtjournal.com/article/2025/2096-4528/2096-4528-2025-46-3-438.shtml
+
+46. Large language models are zero-shot time series forecasters
+链接：doi.org/10.52202/075280-0861

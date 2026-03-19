@@ -1,0 +1,72 @@
+第五章参考文献核对清单
+说明：以下条目按第五章正文中“首次出现顺序”排列，便于你逐段核对。
+说明：为方便人工检查，我保留了文献标题和网址链接；链接均已去掉协议前缀。
+
+1. An algorithm for the machine calculation of complex Fourier series
+链接：doi.org/10.2307/2003354
+
+2. Frequency-domain MLPs are more effective learners in time series forecasting
+链接：arxiv.org/abs/2311.06184
+
+3. Ideal spatial adaptation by wavelet shrinkage
+链接：doi.org/10.1093/biomet/81.3.425
+
+4. Gated attention for large language models: Non-linearity, sparsity, and attention-sink-free
+链接：arxiv.org/abs/2505.06708
+
+5. Time-series forecasting with deep learning: a survey
+链接：doi.org/10.1098/rsta.2020.0209
+
+6. 深度学习在时空序列预测中的应用综述
+链接：journal.bjut.edu.cn/bjgydxxb/cn/article/id/816c447d-0980-4b0a-8344-4c516e98b0ca
+
+7. 基于深度学习的时间序列预测方法综述
+链接：mc.spacejournal.cn/cn/article/pdf/preview/10.19304/J.ISSN1000-7180.2022.0725.pdf
+
+8. Another look at measures of forecast accuracy
+链接：www.robjhyndman.com/papers/mase.pdf
+
+9. Root mean square error (RMSE) or mean absolute error (MAE)? -- Arguments against avoiding RMSE in the literature
+链接：doi.org/10.5194/gmd-7-1247-2014
+
+10. Dropout: A simple way to prevent neural networks from overfitting
+链接：jmlr.org/papers/v15/srivastava14a.html
+
+11. Attention is all you need
+链接：scholar.google.com/scholar?q=Attention+is+all+you+need
+
+12. Time-LLM: Time series forecasting by reprogramming large language models
+链接：arxiv.org/abs/2310.01728
+
+13. Empowering time series analysis with large language models: A survey
+链接：doi.org/10.24963/ijcai.2024/895
+
+14. 基于大语言模型的电力系统预测技术研究综述
+链接：www.pgtjournal.com/article/2025/2096-4528/2096-4528-2025-46-3-438.shtml
+
+15. Reversible instance normalization for accurate time-series forecasting against distribution shift
+链接：openreview.net/forum?id=cGDAkQo1C0p
+
+16. TimeCMA: Towards LLM-Empowered Multivariate Time Series Forecasting via Cross-Modality Alignment
+链接：arxiv.org/abs/2406.01638
+
+17. UniTime: A Language-Empowered Unified Model for Cross-Domain Time Series Forecasting
+链接：arxiv.org/abs/2310.09751
+
+18. iTransformer: Inverted Transformers Are Effective for Time Series Forecasting
+链接：openreview.net/forum?id=JePfAI8fah
+
+19. TimesNet: Temporal 2D-Variation Modeling for General Time Series Analysis
+链接：arxiv.org/abs/2210.02186
+
+20. A Time Series is Worth 64 Words: Long-term Forecasting with Transformers
+链接：arxiv.org/abs/2211.14730
+
+21. Are transformers effective for time series forecasting?
+链接：doi.org/10.1609/aaai.v37i9.26317
+
+22. Transformers in time series: A survey
+链接：doi.org/10.24963/ijcai.2023/759
+
+23. 基于Transformer的时间序列预测方法综述
+链接：jsjkx.com/CN/10.11896/jsjkx.240500043

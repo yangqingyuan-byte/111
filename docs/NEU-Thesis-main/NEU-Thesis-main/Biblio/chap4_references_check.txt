@@ -1,0 +1,57 @@
+第四章参考文献核对清单
+说明：以下条目按第四章正文中“首次出现顺序”排列，便于你逐段核对。
+说明：为方便人工检查，我保留了文献标题和网址链接；链接均已去掉协议前缀。
+
+1. A theory for multiresolution signal decomposition: The wavelet representation
+链接：doi.org/10.1109/34.192463
+
+2. Entropy-based algorithms for best basis selection
+链接：doi.org/10.1109/18.119732
+
+3. 小波分析
+链接：wdp.com.cn/books/2024-05-05/1884.html
+
+4. Attention is all you need
+链接：scholar.google.com/scholar?q=Attention+is+all+you+need
+
+5. Gated attention for large language models: Non-linearity, sparsity, and attention-sink-free
+链接：arxiv.org/abs/2505.06708
+
+6. Another look at measures of forecast accuracy
+链接：www.robjhyndman.com/papers/mase.pdf
+
+7. Root mean square error (RMSE) or mean absolute error (MAE)? -- Arguments against avoiding RMSE in the literature
+链接：doi.org/10.5194/gmd-7-1247-2014
+
+8. 时频分析与小波变换
+链接：lib2.buct.edu.cn/bookInfo_01h0088113.html
+
+9. Reversible instance normalization for accurate time-series forecasting against distribution shift
+链接：openreview.net/forum?id=cGDAkQo1C0p
+
+10. Empowering time series analysis with large language models: A survey
+链接：doi.org/10.24963/ijcai.2024/895
+
+11. The lifting scheme: A construction of second generation wavelets
+链接：doi.org/10.1137/S0036141095289051
+
+12. Ten Lectures on Wavelets
+链接：doi.org/10.1137/1.9781611970104
+
+13. Ideal spatial adaptation by wavelet shrinkage
+链接：doi.org/10.1093/biomet/81.3.425
+
+14. Dropout: A simple way to prevent neural networks from overfitting
+链接：jmlr.org/papers/v15/srivastava14a.html
+
+15. Time-LLM: Time series forecasting by reprogramming large language models
+链接：arxiv.org/abs/2310.01728
+
+16. 基于大语言模型的电力系统预测技术研究综述
+链接：www.pgtjournal.com/article/2025/2096-4528/2096-4528-2025-46-3-438.shtml
+
+17. Frequency-domain MLPs are more effective learners in time series forecasting
+链接：arxiv.org/abs/2311.06184
+
+18. FEDformer: Frequency enhanced decomposed transformer for long-term series forecasting
+链接：proceedings.mlr.press/v162/zhou22g.html
