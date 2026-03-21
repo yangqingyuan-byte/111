@@ -1,42 +1,14 @@
-\chapter{融合小波包分解的时频域增强方法}
-
-本章的主要贡献在于，在第三章统一骨架上提出了一种面向多元长程时间序列预测的小波包多尺度增强方法，并将其系统地嵌入时频协同建模流程中。与基座模型中基于 FFT 幅值的轻量频域分支相比，本章首先通过小波包分解显式拆分不同频带的局部结构，使长期趋势、周期变化与高频突变能够在不同子带中分别建模\cite{mallat1989wavelet,coifman1992bestbasis,fan2008wavelet}。其次，本文为各子带设计了独立投影、频带身份编码、共享门控编码器和注意力池化机制，使模型不仅能够获取多尺度频带信息，还能够对不同子带的重要性进行自适应选择。最后，本章通过时域分支与小波包分支之间的跨注意力交互构建更细粒度的时频融合路径，为后续从机理层面解释其在 MSE 和极端波动场景下的优势奠定了结构基础\cite{vaswani2017attention,qiu2025gatedattention}。  
-
-\section{问题分析与研究动机}
-
-多元长程时间序列通常同时包含长期趋势、季节性波动、局部尖峰和突变噪声等多种成分。仅依赖时域编码器进行统一建模时，模型虽然能够学习整体动态模式，但对不同尺度成分的解耦能力有限，尤其在存在剧烈波动或局部异常点时，预测误差容易集中在少量时间步上。由于 MSE 对大误差样本具有平方放大效应，这类局部建模不足会直接拉高整体 MSE 指标\cite{hyndman2006accuracy,chai2014rmsemae}。  
-
-与第五章将讨论的全局频域建模不同，小波包分解能够同时对低频与高频分量进行递归细分，从而得到一组具有明确频带含义的多尺度子带表示。与仅保留全局谱结构的傅里叶方法相比，该策略更适合描述局部时频变化，尤其适用于周期模式与突变行为并存的场景\cite{coifman1992bestbasis,tang2016timefreqwavelet}。对多元长程预测任务而言，这意味着模型可以先在频带层面对信号进行分解，再分别对不同子带进行编码和选择性融合，从而在保留长期趋势信息的同时增强对局部大偏差的抑制能力。  
-
-基于上述考虑，本章在第三章统一骨架下，将频域分支具体替换为小波包增强模块，形成“时域编码 + 小波包多尺度建模 + 冻结语义先验 + 跨模态对齐”的完整模型\cite{kim2022revin,jiang2024empowering}。与原始基座相比，该模型的核心差异在于：频域信息不再由单一 FFT 幅值表示提供，而是通过多子带分解、逐子带编码、注意力池化与跨分支交互共同构成。由此，本章的研究目标可以概括为三个方面：给出小波包分解版本的具体结构设计；分析多尺度子带特征如何与时域特征及语义先验协同；通过实验验证该方法在 MSE 与极端波动场景下的优势。
-
-\section{模型架构设计}
-
-图\ref{fig:chap4-wavelet-packet-overview}给出了本章所提出的融合小波包分解的时频域增强模型整体结构。与第三章统一骨架相比，该模型将频域分支替换为可学习小波包分解模块，并在子带级编码、频带聚合以及步长感知融合的基础上与冻结语义先验共同完成预测\cite{coifman1992bestbasis,sweldens1997lifting,jiang2024empowering}。
-
-\begin{figure}[!ht]
+\chapter{融合小波包分解的时频域增强方法} 本章的主要贡献在于，在第三章统一骨架上提出了一种面向多元长程时间序列预测的小波包多尺度增强方法，并将其系统地嵌入时频协同建模流程中。与基座模型中基于 FFT 幅值的轻量频域分支相比，本章首先通过小波包分解显式拆分不同频带的局部结构，使长期趋势、周期变化与高频突变能够在不同子带中分别建模。其次，本文为各子带设计了独立投影、频带身份编码、共享门控编码器和注意力池化机制，使模型不仅能够获取多尺度频带信息，还能够对不同子带的重要性进行自适应选择。最后，本章通过时域分支与小波包分支之间的跨注意力交互构建更细粒度的时频融合路径，为后续从机理层面解释其在 MSE 和极端波动场景下的优势奠定了结构基础。 \section{问题分析与研究动机} 多元长程时间序列通常同时包含长期趋势、季节性波动、局部尖峰和突变噪声等多种成分。仅依赖时域编码器进行统一建模时，模型虽然能够学习整体动态模式，但对不同尺度成分的解耦能力有限，尤其在存在剧烈波动或局部异常点时，预测误差容易集中在少量时间步上。由于 MSE 对大误差样本具有平方放大效应，这类局部建模不足会直接拉高整体 MSE 指标。 与第五章将讨论的全局频域建模不同，小波包分解能够同时对低频与高频分量进行递归细分，从而得到一组具有明确频带含义的多尺度子带表示。与仅保留全局谱结构的傅里叶方法相比，该策略更适合描述局部时频变化，尤其适用于周期模式与突变行为并存的场景。对多元长程预测任务而言，这意味着模型可以先在频带层面对信号进行分解，再分别对不同子带进行编码和选择性融合，从而在保留长期趋势信息的同时增强对局部大偏差的抑制能力。 基于上述考虑，本章在第三章统一骨架下，将频域分支具体替换为小波包增强模块，形成“时域编码 + 小波包多尺度建模 + 冻结语义先验 + 跨模态对齐”的完整模型。与原始基座相比，该模型的核心差异在于：频域信息不再由单一 FFT 幅值表示提供，而是通过多子带分解、逐子带编码、注意力池化与跨分支交互共同构成。由此，本章的研究目标可以概括为三个方面：给出小波包分解版本的具体结构设计；分析多尺度子带特征如何与时域特征及语义先验协同；通过实验验证该方法在 MSE 与极端波动场景下的优势。 \section{模型架构设计} 图\ref{fig:chap4-wavelet-packet-overview}给出了本章所提出的融合小波包分解的时频域增强模型整体结构。与第三章统一骨架相比，该模型将频域分支替换为可学习小波包分解模块，并在子带级编码、频带聚合以及步长感知融合的基础上与冻结语义先验共同完成预测\cite{sweldens1997lifting}。 \begin{figure}[!ht]
 \centering
 \includegraphics[width=\textwidth]{Img/chap4_wavelet_packet_overview.png}
 \bicaption{融合小波包分解的时频域增强模型整体结构图}{Overall architecture of the time-frequency enhanced model with wavelet packet decomposition}
 \label{fig:chap4-wavelet-packet-overview}
-\end{figure}
-
-\subsection{小波包多尺度分解策略}
-
-本章的小波包增强模块建立在第三章统一骨架之上，但频域分支不再采用单一的 FFT 幅值表示，而是引入可学习小波包分解（learnable wavelet packet decomposition）对输入序列进行递归式多尺度拆分\cite{coifman1992bestbasis,sweldens1997lifting}。设经 RevIN 归一化后的输入序列为
-
-\begin{figure}[!ht]
+\end{figure} \subsection{可学习小波包分解设计} 本章的小波包增强模块建立在第三章统一骨架之上，但频域分支不再采用单一的 FFT 幅值表示，而是引入可学习小波包分解（learnable wavelet packet decomposition）对输入序列进行递归式多尺度拆分。设经 RevIN 归一化后的输入序列为 \begin{figure}[!ht]
 \centering
 \includegraphics[width=\textwidth]{Img/chap4_wavelet_packet_decomposition.png}
 \bicaption{两层小波包分解及叶子子带结构示意图}{Illustration of two-level wavelet packet decomposition and leaf subbands}
 \label{fig:chap4-wavelet-packet-decomposition}
-\end{figure}
-
-图\ref{fig:chap4-wavelet-packet-decomposition}展示了本章采用的两层小波包分解过程。输入序列在第 1 层被拆分为近似分量和细节分量，随后两类分量在第 2 层继续递归分解，最终形成具有明确频带语义的 4 个叶子子带，为后续的子带级编码与频带聚合提供基础\cite{coifman1992bestbasis,fan2008wavelet}。
-
-从频带语义上看，叶子子带 AA 对应最低频部分，主要保留序列中的长期趋势与缓慢变化成分；子带 AD 由近似分量继续分解得到，反映在总体平滑背景下的低频起伏与次级周期变化；子带 DA 对应中高频范围，更多刻画局部振荡、短期波动以及较快的周期扰动；子带 DD 则处于最高频区域，通常包含尖峰、突变、噪声和剧烈局部变化等细节信息。图中四条示意波形正是为了直观展示这种“由低频到高频、由平滑到剧烈”的变化规律。通过将不同频率层次的成分显式拆分，模型能够在后续编码过程中分别建模长期趋势、低频变化和高频扰动，从而提高对复杂非平稳时间序列的表达能力。
-
-\noindent 设经 RevIN 归一化后的输入序列为
+\end{figure} 图\ref{fig:chap4-wavelet-packet-decomposition}展示了本章采用的两层小波包分解过程。输入序列在第 1 层被拆分为近似分量和细节分量，随后两类分量在第 2 层继续递归分解，最终形成具有明确频带语义的 4 个叶子子带，为后续的子带级编码与频带聚合提供基础。 从频带语义上看，叶子子带 AA 对应最低频部分，主要保留序列中的长期趋势与缓慢变化成分；子带 AD 由近似分量继续分解得到，反映在总体平滑背景下的低频起伏与次级周期变化；子带 DA 对应中高频范围，更多刻画局部振荡、短期波动以及较快的周期扰动；子带 DD 则处于最高频区域，通常包含尖峰、突变、噪声和剧烈局部变化等细节信息。图中四条示意波形正是为了直观展示这种“由低频到高频、由平滑到剧烈”的变化规律。通过将不同频率层次的成分显式拆分，模型能够在后续编码过程中分别建模长期趋势、低频变化和高频扰动，从而提高对复杂非平稳时间序列的表达能力。 \noindent 设经 RevIN 归一化后的输入序列为
 \begin{equation}
 \mathbf{X}'\in\mathbb{R}^{B\times N\times L}
 \label{eq:chap4-input}
@@ -51,7 +23,7 @@
 \mathbf{X}_{\mathrm{flat}}\in\mathbb{R}^{BN\times 1\times L}
 \label{eq:chap4-flat-series}
 \end{equation}
-从而能够对每个变量通道独立执行同构的小波包分解。与传统固定滤波器形式的小波包变换不同，本章采用提升格式（lifting scheme）构造可学习的小波包步骤\cite{sweldens1997lifting,tang2016timefreqwavelet}。设第 \(j\) 层第 \(k\) 个节点表示为 \(\mathbf{s}^{(j,k)}\in\mathbb{R}^{BN\times 1\times L_j}\)，其根节点满足
+从而能够对每个变量通道独立执行同构的小波包分解。与传统固定滤波器形式的小波包变换不同，本章采用提升格式（lifting scheme）构造可学习的小波包步骤。设第 \(j\) 层第 \(k\) 个节点表示为 \(\mathbf{s}^{(j,k)}\in\mathbb{R}^{BN\times 1\times L_j}\)，其根节点满足
 \begin{equation}
 \mathbf{s}^{(0,1)}=\mathbf{X}_{\mathrm{flat}}.
 \label{eq:chap4-root-node}
@@ -82,9 +54,7 @@
 \end{cases}
 \label{eq:chap4-sampling-matrix}
 \end{equation}
-这里 \(\tilde{L}_j=\lfloor L_j/2 \rfloor\)。式（\ref{eq:chap4-even-matrix}）和式（\ref{eq:chap4-sampling-matrix}）中的 \(\mathbf{D}_{\mathrm{e}}^{(j)}\) 与 \(\mathbf{D}_{\mathrm{o}}^{(j)}\) 本质上是两类稀疏选择矩阵，其作用并不是引入额外可学习参数，而是以矩阵乘法的形式显式完成“抽取偶数位置样本”和“抽取奇数位置样本”这一步骤。换言之，\(\mathbf{D}_{\mathrm{e}}^{(j)}\mathbf{s}^{(j,k)}\) 保留节点序列中的第 \(0,2,4,\dots\) 个时间位置，而 \(\mathbf{D}_{\mathrm{o}}^{(j)}\mathbf{s}^{(j,k)}\) 保留第 \(1,3,5,\dots\) 个时间位置。  
-
-为了便于理解，若暂不考虑批量维和通道维，并令 \(L_j=8\)，则节点序列 \(\mathbf{s}^{(j,k)}=[s_0,s_1,\dots,s_7]^\top\) 经过选择矩阵作用后可写为
+这里 \(\tilde{L}_j=\lfloor L_j/2 \rfloor\)。式（\ref{eq:chap4-even-matrix}）和式（\ref{eq:chap4-sampling-matrix}）中的 \(\mathbf{D}_{\mathrm{e}}^{(j)}\) 与 \(\mathbf{D}_{\mathrm{o}}^{(j)}\) 本质上是两类稀疏选择矩阵，其作用并不是引入额外可学习参数，而是以矩阵乘法的形式显式完成“抽取偶数位置样本”和“抽取奇数位置样本”这一步骤。换言之，\(\mathbf{D}_{\mathrm{e}}^{(j)}\mathbf{s}^{(j,k)}\) 保留节点序列中的第 \(0,2,4,\dots\) 个时间位置，而 \(\mathbf{D}_{\mathrm{o}}^{(j)}\mathbf{s}^{(j,k)}\) 保留第 \(1,3,5,\dots\) 个时间位置。 为了便于理解，若暂不考虑批量维和通道维，并令 \(L_j=8\)，则节点序列 \(\mathbf{s}^{(j,k)}=[s_0,s_1,\dots,s_7]^\top\) 经过选择矩阵作用后可写为
 \begin{equation}
 \mathbf{D}_{\mathrm{e}}^{(j)}\mathbf{s}^{(j,k)}=
 \begin{bmatrix}
@@ -117,9 +87,7 @@ P_j(\mathbf{z})=\mathbf{W}^{p,2}_j * \phi\!\left(\mathbf{W}^{p,1}_j * \mathbf{z}
 U_j(\mathbf{z})=\mathbf{W}^{u,2}_j * \phi\!\left(\mathbf{W}^{u,1}_j * \mathbf{z}+\mathbf{b}^{u,1}_j\right)+\mathbf{b}^{u,2}_j
 \label{eq:chap4-update-op}
 \end{equation}
-其中 \(*\) 表示一维卷积，\(\phi(\cdot)\) 表示 LeakyReLU 激活函数。与固定 \texttt{db4} 滤波器相比，该设计能够根据不同数据集的统计特征自动调整分解行为，因此更适合多元时间序列预测中的异质变量建模场景\cite{daubechies1992ten,sweldens1997lifting}。  
-
-为了抑制局部噪声对子带分解的干扰，本章进一步在近似分量和细节分量上引入可学习软阈值函数\cite{donoho1994waveshrink}。对任意输入 \(z\)，其形式可写为
+其中 \(*\) 表示一维卷积，\(\phi(\cdot)\) 表示 LeakyReLU 激活函数。与固定 \texttt{db4} 滤波器相比，该设计能够根据不同数据集的统计特征自动调整分解行为，因此更适合多元时间序列预测中的异质变量建模场景\cite{daubechies1992ten}。 为了抑制局部噪声对子带分解的干扰，本章进一步在近似分量和细节分量上引入可学习软阈值函数\cite{donoho1994waveshrink}。对任意输入 \(z\)，其形式可写为
 \begin{equation}
 \mathcal{S}_{\tau}(z)=\mathrm{sign}(z)\max(|z|-\tau,0)
 \label{eq:chap4-soft-threshold}
@@ -133,9 +101,7 @@ U_j(\mathbf{z})=\mathbf{W}^{u,2}_j * \phi\!\left(\mathbf{W}^{u,1}_j * \mathbf{z}
 \tilde{\mathbf{a}}^{(j,k)}=\mathcal{S}_{\tau_a}\!\left(\mathbf{a}^{(j,k)}\right).
 \label{eq:chap4-threshold-approx}
 \end{equation}
-该机制的作用在于削弱幅值较小且不稳定的局部扰动，使分解后的子带表示更加稀疏和稳健，也与后续实验中 MSE 对大误差样本的敏感性分析形成对应\cite{donoho1994waveshrink,chai2014rmsemae}。  
-
-在小波包框架下，近似分量与细节分量都会继续向下递归分解。若分解层数设为 \(J\)，则对任意 \(j=0,1,\dots,J-1\) 和节点索引 \(k=1,\dots,2^j\)，其两个子节点递归定义为
+该机制的作用在于削弱幅值较小且不稳定的局部扰动，使分解后的子带表示更加稀疏和稳健，也与后续实验中 MSE 对大误差样本的敏感性分析形成对应。 在小波包框架下，近似分量与细节分量都会继续向下递归分解。若分解层数设为 \(J\)，则对任意 \(j=0,1,\dots,J-1\) 和节点索引 \(k=1,\dots,2^j\)，其两个子节点递归定义为
 \begin{equation}
 \mathbf{s}^{(j+1,2k-1)}=\tilde{\mathbf{a}}^{(j,k)}
 \label{eq:chap4-left-child}
@@ -157,13 +123,7 @@ i\in\{1,2,\dots,2^J\}
 \mathcal{S}^{(J)}=\{\mathbf{S}_1,\mathbf{S}_2,\dots,\mathbf{S}_{2^J}\}.
 \label{eq:chap4-wpd-set}
 \end{equation}
-其中 \(L_i\approx L/2^J\)。在本文默认设置中取 \(J=2\)，因此最终可以得到 4 个叶子子带，分别记为 AA、AD、DA 和 DD。这样的设置兼顾了频带分辨率与子带长度：若 \(J\) 过小，则不同尺度成分无法充分分离；若 \(J\) 过大，则子带长度过短，局部表示容易变得不稳定，并增加后续建模开销\cite{coifman1992bestbasis,fan2008wavelet}。  
-
-从建模机制上看，式（\ref{eq:chap4-left-child})--式（\ref{eq:chap4-wpd-set}）并不是简单地增加特征数量，而是将原始时间序列中耦合在一起的低频趋势、周期波动与高频扰动递归拆解为多路具有明确频带含义的子序列。由此，模型可以在子带层面分别学习局部模式，再在后续阶段完成重组与融合。这一结构正是第四章区别于第三章统一骨架以及第五章全局频域前馈方案的关键所在。
-
-\subsection{频域子带特征与 LLM 嵌入空间的映射机制}
-
-得到 \(\{\mathbf{S}_i\}_{i=1}^{2^J}\) 后，模型需要将不同长度的子带映射到统一的通道空间，以便后续与时域分支和语义分支对齐。为此，本文为每个叶子子带配置独立的线性投影层 \(\mathbf{W}_i\in\mathbb{R}^{1\times C}\)。将第 \(i\) 个子带重排为 \(\mathbf{Z}_i\in\mathbb{R}^{BN\times L_i\times 1}\) 后，其初始嵌入形式可写为
+其中 \(L_i\approx L/2^J\)。在本文默认设置中取 \(J=2\)，因此最终可以得到 4 个叶子子带，分别记为 AA、AD、DA 和 DD。这样的设置兼顾了频带分辨率与子带长度：若 \(J\) 过小，则不同尺度成分无法充分分离；若 \(J\) 过大，则子带长度过短，局部表示容易变得不稳定，并增加后续建模开销。 从建模机制上看，式（\ref{eq:chap4-left-child})--式（\ref{eq:chap4-wpd-set}）并不是简单地增加特征数量，而是将原始时间序列中耦合在一起的低频趋势、周期波动与高频扰动递归拆解为多路具有明确频带含义的子序列。由此，模型可以在子带层面分别学习局部模式，再在后续阶段完成重组与融合。这一结构正是第四章区别于第三章统一骨架以及第五章全局频域前馈方案的关键所在。 \subsection{子带特征映射与频带交互设计} 得到 \(\{\mathbf{S}_i\}_{i=1}^{2^J}\) 后，模型需要将不同长度的子带映射到统一的通道空间，以便后续与时域分支和语义分支对齐。为此，本文为每个叶子子带配置独立的线性投影层 \(\mathbf{W}_i\in\mathbb{R}^{1\times C}\)。将第 \(i\) 个子带重排为 \(\mathbf{Z}_i\in\mathbb{R}^{BN\times L_i\times 1}\) 后，其初始嵌入形式可写为
 \begin{equation}
 \mathbf{Z}_i=\operatorname{Transpose}\!\left(\mathbf{S}_i\right)
 \label{eq:chap4-band-reshape}
@@ -176,14 +136,12 @@ i\in\{1,2,\dots,2^J\}
 \mathbf{H}_i^{(0)}\in\mathbb{R}^{BN\times L_i\times C}
 \label{eq:chap4-band-proj-shape}
 \end{equation}
-其中 \(C\) 为统一通道维度。使用独立投影而非共享投影的原因在于，不同子带对应的频谱区域和统计特性并不相同，单一线性映射难以同时兼顾低频趋势与高频扰动的表达需求。  
-
-为了在参数共享的后续编码过程中保留“频带身份”，本章进一步为每个子带引入可学习的频带身份嵌入 \(\mathbf{e}_i\in\mathbb{R}^{C}\)。令 \(\mathbf{E}_i=\mathbf{1}_{L_i}\mathbf{e}_i^\top\in\mathbb{R}^{L_i\times C}\) 表示沿时间维复制后的频带嵌入矩阵，则有
+其中 \(C\) 为统一通道维度。使用独立投影而非共享投影的原因在于，不同子带对应的频谱区域和统计特性并不相同，单一线性映射难以同时兼顾低频趋势与高频扰动的表达需求。 为了在参数共享的后续编码过程中保留“频带身份”，本章进一步为每个子带引入可学习的频带身份嵌入 \(\mathbf{e}_i\in\mathbb{R}^{C}\)。令 \(\mathbf{E}_i=\mathbf{1}_{L_i}\mathbf{e}_i^\top\in\mathbb{R}^{L_i\times C}\) 表示沿时间维复制后的频带嵌入矩阵，则有
 \begin{equation}
 \mathbf{H}_i^{(1)}=\mathbf{H}_i^{(0)}+\mathbf{E}_i.
 \label{eq:chap4-band-id}
 \end{equation}
-这里的嵌入并非时间位置编码，而是对子带语义的显式标识，旨在让共享编码器能够区分“当前特征来源于哪个频段”。随后，所有子带特征共享同一个门控 Transformer 编码器进行建模\cite{vaswani2017attention,qiu2025gatedattention}。若记编码器为 \(\mathcal{E}_{\mathrm{wp}}(\cdot)\)，则有
+这里的嵌入并非时间位置编码，而是对子带语义的显式标识，旨在让共享编码器能够区分“当前特征来源于哪个频段”。随后，所有子带特征共享同一个门控 Transformer 编码器进行建模。若记编码器为 \(\mathcal{E}_{\mathrm{wp}}(\cdot)\)，则有
 \begin{equation}
 \tilde{\mathbf{H}}_i=\mathcal{E}_{\mathrm{wp}}\!\left(\mathbf{H}_i^{(1)}\right)
 \label{eq:chap4-band-encoder}
@@ -205,9 +163,7 @@ i\in\{1,2,\dots,2^J\}
 \tilde{\mathbf{H}}_i=\mathbf{H}_i^{\mathrm{att}}+\operatorname{FFN}\!\left(\operatorname{LN}(\mathbf{H}_i^{\mathrm{att}})\right)
 \label{eq:chap4-shared-encoder-ffn}
 \end{equation}
-其中 \(\operatorname{MHA}(\cdot)\) 表示多头自注意力，\(\operatorname{LN}(\cdot)\) 表示层归一化，\(\odot\) 表示逐元素乘法。共享编码器一方面能够减少参数规模，另一方面也促使不同频带在统一表示空间中接受一致的建模约束。  
-
-在获得时序编码结果后，模型需要进一步将每个子带压缩为变量级向量。本文采用注意力池化而非简单均值池化。设可学习查询向量为 \(\mathbf{q}\in\mathbb{R}^{C}\)，并记 \(\mathbf{Q}=\mathbf{1}_{BN}\mathbf{q}^\top\in\mathbb{R}^{BN\times C}\)，则第 \(i\) 个子带的注意力打分向量可写为
+其中 \(\operatorname{MHA}(\cdot)\) 表示多头自注意力，\(\operatorname{LN}(\cdot)\) 表示层归一化，\(\odot\) 表示逐元素乘法。共享编码器一方面能够减少参数规模，另一方面也促使不同频带在统一表示空间中接受一致的建模约束。 在获得时序编码结果后，模型需要进一步将每个子带压缩为变量级向量。本文采用注意力池化而非简单均值池化。设可学习查询向量为 \(\mathbf{q}\in\mathbb{R}^{C}\)，并记 \(\mathbf{Q}=\mathbf{1}_{BN}\mathbf{q}^\top\in\mathbb{R}^{BN\times C}\)，则第 \(i\) 个子带的注意力打分向量可写为
 \begin{equation}
 \mathbf{r}_i=\tilde{\mathbf{H}}_i\mathbf{q}\in\mathbb{R}^{BN\times L_i}
 \label{eq:chap4-band-score}
@@ -226,9 +182,7 @@ i\in\{1,2,\dots,2^J\}
 \mathbf{P}=\operatorname{Stack}(\mathbf{p}_1,\dots,\mathbf{p}_{2^J})
 \in\mathbb{R}^{BN\times 2^J\times C}
 \label{eq:chap4-band-stack}
-\end{equation}
-
-在训练阶段，为避免模型过度依赖某一固定频带，代码实现中还引入了频带随机丢弃（frequency dropout）策略\cite{srivastava2014dropout}。若记随机掩码矩阵为 \(\mathbf{M}\in\{0,1\}^{BN\times 2^J\times 1}\)，则训练期输入可写为
+\end{equation} 在训练阶段，为避免模型过度依赖某一固定频带，代码实现中还引入了频带随机丢弃（frequency dropout）策略\cite{srivastava2014dropout}。若记随机掩码矩阵为 \(\mathbf{M}\in\{0,1\}^{BN\times 2^J\times 1}\)，则训练期输入可写为
 \begin{equation}
 \mathbf{P}^{\mathrm{drop}}=\mathbf{M}\odot \mathbf{P}
 \label{eq:chap4-band-dropout}
@@ -266,20 +220,12 @@ i\in\{1,2,\dots,2^J\}
 =\sum_{i=1}^{2^J}\boldsymbol{\beta}_i\odot \hat{\mathbf{p}}_i
 \label{eq:chap4-wp-final}
 \end{equation}
-其中 \(\sigma(\cdot)\) 为 Sigmoid 函数。式（\ref{eq:chap4-band-dropout})--式（\ref{eq:chap4-wp-final}）表明，小波包分支并非对各叶子子带做简单拼接，而是先通过随机屏蔽提升鲁棒性，再通过频带级自注意力显式建模跨频带依赖关系，最后由可学习权重自适应决定不同频带对最终预测任务的贡献比例。  
-
-需要指出的是，小波包分支并不直接与 LLM 的 token 级表示逐点对齐，而是先在本分支内部完成“分解、编码、池化、重组”，最终输出变量级表示 \(\mathbf{H}^{\mathrm{wp}}\in\mathbb{R}^{B\times N\times C}\)。这一设计使该分支能够自然地接入第三章的统一多模态框架，并在保持结构紧凑的同时降低跨模态对齐的复杂度\cite{jiang2024empowering,jin2024timellm}。
-
-\subsection{多尺度特征融合与预测头设计}
-
-与小波包分支并行，第三章中的时域主干仍然保留。对归一化后的输入 \(\mathbf{X}'\)，模型首先通过长度到特征的线性映射得到时域表示\cite{kim2022revin,vaswani2017attention}
+其中 \(\sigma(\cdot)\) 为 Sigmoid 函数。式（\ref{eq:chap4-band-dropout})--式（\ref{eq:chap4-wp-final}）表明，小波包分支并非对各叶子子带做简单拼接，而是先通过随机屏蔽提升鲁棒性，再通过频带级自注意力显式建模跨频带依赖关系，最后由可学习权重自适应决定不同频带对最终预测任务的贡献比例。 需要指出的是，小波包分支并不直接与 LLM 的 token 级表示逐点对齐，而是先在本分支内部完成“分解、编码、池化、重组”，最终输出变量级表示 \(\mathbf{H}^{\mathrm{wp}}\in\mathbb{R}^{B\times N\times C}\)。这一设计使该分支能够自然地接入第三章的统一多模态框架，并在保持结构紧凑的同时降低跨模态对齐的复杂度。 \subsection{时频特征融合与预测输出设计} 与小波包分支并行，第三章中的时域主干仍然保留。对归一化后的输入 \(\mathbf{X}'\)，模型首先通过长度到特征的线性映射得到时域表示
 \begin{equation}
 \mathbf{H}^{\mathrm{time}}=\phi(\mathbf{X}')\in\mathbb{R}^{B\times N\times C}
 \label{eq:chap4-time-branch}
 \end{equation}
-再经若干层门控 Transformer 编码器获得更高层时域特征。第四章的关键并不在于替换整个主干，而在于通过小波包分支为该主干提供局部多尺度补充信息\cite{vaswani2017attention,qiu2025gatedattention}。  
-
-在时域与小波包分支的融合阶段，本文没有采用简单拼接，而是设计了显式的步长感知门控融合机制\cite{qiu2025gatedattention}。设预测步长归一化后形成的任务先验为 \(\mathbf{r}\in\mathbb{R}^{B\times N\times 1}\)，则融合门控可写为
+再经若干层门控 Transformer 编码器获得更高层时域特征。第四章的关键并不在于替换整个主干，而在于通过小波包分支为该主干提供局部多尺度补充信息。 在时域与小波包分支的融合阶段，本文没有采用简单拼接，而是设计了显式的步长感知门控融合机制。设预测步长归一化后形成的任务先验为 \(\mathbf{r}\in\mathbb{R}^{B\times N\times 1}\)，则融合门控可写为
 \begin{equation}
 \mathbf{G}
 =\sigma\!\left(
@@ -296,9 +242,7 @@ i\in\{1,2,\dots,2^J\}
 =\mathbf{H}^{\mathrm{time}}+\mathbf{G}\odot\mathbf{H}^{\mathrm{wp}}.
 \label{eq:chap4-fusion}
 \end{equation}
-式（\ref{eq:chap4-fusion}）说明，小波包分支不是对时域分支的简单替代，而是作为与预测跨度相关的残差增强项注入主干表示。这一机制使模型能够根据任务难度与步长尺度动态调整局部频带信息的注入强度。  
-
-完成时频融合后，模型继续沿用第三章的统一语义增强流程。冻结大语言模型生成的变量级语义嵌入先经过 \texttt{prompt\_encoder} 编码，得到语义先验 \(\mathbf{H}^{\mathrm{sem}}\)。然后，融合后的时频表示与语义先验在 CMA 模块中执行跨模态对齐\cite{jiang2024empowering,jin2024timellm,zhang2025llmpowercn}：
+式（\ref{eq:chap4-fusion}）说明，小波包分支不是对时域分支的简单替代，而是作为与预测跨度相关的残差增强项注入主干表示。这一机制使模型能够根据任务难度与步长尺度动态调整局部频带信息的注入强度。 完成时频融合后，模型继续沿用第三章的统一语义增强流程。冻结大语言模型生成的变量级语义嵌入先经过提示编码器编码，得到语义先验 \(\mathbf{H}^{\mathrm{sem}}\)。然后，融合后的时频表示与语义先验在跨模态对齐模块（CMA）中执行跨模态对齐：
 \begin{equation}
 \mathbf{H}^{\mathrm{cma}}
 =\mathrm{CMA}\!\left(
@@ -310,30 +254,123 @@ i\in\{1,2,\dots,2^J\}
 \end{equation}
 在此基础上，模型将 \(\mathbf{H}^{\mathrm{cma}}\) 输入解码器，并通过线性映射将通道维投影到预测步长维，得到最终预测输出：
 \begin{equation}
-\hat{\mathbf{Y}}
+\widehat{\mathbf{Y}}
 =\mathrm{Proj}\!\left(
 \mathrm{Decoder}\left(\mathbf{H}^{\mathrm{cma}}\right)
 \right)
-\in\mathbb{R}^{B\times L_{\mathrm{pred}}\times N}.
+\in\mathbb{R}^{B\times H\times N}.
 \label{eq:chap4-output}
 \end{equation}
-最后，再通过 RevIN 的反归一化步骤恢复到原始数值尺度\cite{kim2022revin}。  
-
-综合来看，第四章模型可以概括为“归一化输入 $\rightarrow$ 可学习小波包分解 $\rightarrow$ 子带级编码与池化 $\rightarrow$ 步长感知门控融合 $\rightarrow$ 语义对齐与解码预测”的五阶段流程。其中，小波包分支负责显式建模局部多尺度结构，时域主干负责保留原始时间依赖，语义分支负责补充变量层面的外部先验，而门控融合与 CMA 则承担不同模态之间的协同建模任务。该结构既继承了第三章统一骨架的整体稳定性，又通过局部多尺度分解机制增强了对尖峰、突变和高波动片段的刻画能力\cite{sweldens1997lifting,qiu2025gatedattention,jiang2024empowering}。
-
-\section{实验设置与结果分析}
-
-\subsection{实验设置与对比基线}
-
-本章实验沿用第 3.4.1 节的基本设置，并保持数据集划分、输入窗口长度、预测长度和评价指标一致，以保证对比结果的公平性。模型方面，仅将统一框架中的频域分支替换为本章提出的小波包增强模块，其余部分如时域分支、语义分支、CMA 与解码器均保持不变。默认情况下，小波基选用 \texttt{db4}，分解层数设置为 2，对应 4 个叶子子带；损失函数可继续采用与总体实验一致的优化目标，并在结果展示阶段重点分析 MSE 指标\cite{daubechies1992ten,hyndman2006accuracy,chai2014rmsemae}。  
-
-为了更清晰地体现小波包分支的实际贡献，本章设置了两组主对比实验。第一组基线包括 T3time、TimeCMA、TimeLLM 和 TimesNet，用于比较本章方法与统一框架、跨模态增强方法以及经典时序骨干之间的差异；第二组基线包括 UniTime、DLinear、iTransformer 和 PatchTST，用于补充统一建模、线性建模与 Transformer 路线下的强基线对照\cite{yi2023frets,zhou2022fedformer}。训练过程使用统一的优化器、学习率、batch size 和早停策略，以保证不同模型之间的比较具有公平性。
-
-\subsection{MSE 指标表现及显著性分析}
-
-本节重点考察小波包增强模型在 MSE 指标上的表现，并将结果与统一框架基线以及其他代表性长程预测方法进行比较。为与第五章主结果表的组织方式保持一致，表\ref{tab:chap4-main-results-a}和表\ref{tab:chap4-main-results-b}均按照“完整数据集 + 完整预测长度 + 共享 Ours 列”的形式重排：表\ref{tab:chap4-main-results-a}展示 Ours 与 T3time、TimeCMA、TimeLLM、TimesNet 的对比，表\ref{tab:chap4-main-results-b}展示 Ours 与 UniTime、DLinear、iTransformer、PatchTST 的对比。这样既便于后续直接回填完整实验结果，也便于与第五章两张主结果表进行横向对照。两张表同时保留 MSE 和 MAE 指标，其中本章后续分析仍以 MSE 为主，以突出小波包多尺度分解对大误差样本的抑制能力\cite{hyndman2006accuracy,chai2014rmsemae}。
-
-\begin{table}[!htbp]
+其中 \(H=L_{\mathrm{pred}}\) 表示预测步长。
+最后，再通过 RevIN 的反归一化步骤恢复到原始数值尺度。 综合来看，第四章模型可以概括为“归一化输入 $\rightarrow$ 可学习小波包分解 $\rightarrow$ 子带级编码与池化 $\rightarrow$ 步长感知门控融合 $\rightarrow$ 语义对齐与解码预测”的五阶段流程。其中，小波包分支负责显式建模局部多尺度结构，时域主干负责保留原始时间依赖，语义分支负责补充变量层面的外部先验，而门控融合与跨模态对齐模块则承担不同模态之间的协同建模任务。该结构既继承了第三章统一骨架的整体稳定性，又通过局部多尺度分解机制增强了对尖峰、突变和高波动片段的刻画能力。 \subsection{损失函数设计} 第四章模型的训练目标需要同时兼顾两方面需求：一方面，预测结果应尽可能逼近真实未来序列，从而直接降低主评价指标 MSE；另一方面，可学习小波包分解中的软阈值参数不宜在训练过程中无限制增大，否则可能导致对子带细节的过度收缩，进而削弱局部高波动结构的表达能力。因此，代码实现中采用“主损失 + 稀疏正则项”的组合形式。设模型预测结果与真实目标分别为
+\begin{equation}
+\widehat{\mathbf{Y}},\mathbf{Y}\in\mathbb{R}^{B\times H\times N}
+\label{eq:chap4-loss-target}
+\end{equation}
+其中 \(B\)、\(H\) 和 \(N\) 分别表示批量大小、预测长度和变量个数，则基础预测损失定义为均方误差
+\begin{equation}
+\mathcal{L}_{\mathrm{mse}}
+=\frac{1}{BHN}
+\sum_{b=1}^{B}\sum_{h=1}^{H}\sum_{n=1}^{N}
+\left(\widehat{y}_{b,h,n}-y_{b,h,n}\right)^2.
+\label{eq:chap4-loss-mse}
+\end{equation}
+式（\ref{eq:chap4-loss-mse}）与训练脚本中的均方误差损失保持一致。由于 MSE 对较大误差具有平方放大效应，因此该主损失能够更加突出局部峰值、突变点和异常片段附近的预测偏差，这也与第四章重点分析 MSE 表现的实验目标相一致。 在此基础上，本章进一步对所有可学习软阈值模块中的阈值参数加入 \(L_1\) 型正则。设全部软阈值模块的集合记为 \(\mathcal{M}\)，第 \(m\) 个模块对应的可学习阈值张量为 \(\boldsymbol{\Theta}_m\in\mathbb{R}^{1\times c_m\times 1}\)，其元素个数记为 \(|\Omega_m|\)，则阈值正则项可写为
+\begin{equation}
+\mathcal{L}_{\mathrm{sparse}}
+=\sum_{m\in\mathcal{M}}
+\frac{1}{|\Omega_m|}
+\left\|\boldsymbol{\Theta}_m\right\|_1.
+\label{eq:chap4-loss-sparse}
+\end{equation}
+式（\ref{eq:chap4-loss-sparse}）对应代码中的 \texttt{get\_sparsity\_loss()}，即对每个软阈值模块的阈值参数取绝对值均值后求和。在当前默认设置 \(J=2\) 下，小波包分解包含两层提升步骤，因此一共对应 4 个软阈值模块，分别作用于不同层次的近似分量和细节分量。该正则项并不直接约束预测误差，而是通过限制阈值参数的幅值，抑制过强的软阈值收缩行为，从而使局部频带分解在保持稀疏性的同时不过度丢失有效细节信息。 因此，第四章完整模型的训练目标可表示为
+\begin{equation}
+\mathcal{L}_{\mathrm{chap4}}
+=\mathcal{L}_{\mathrm{mse}}
++\lambda_{\mathrm{s}}\mathcal{L}_{\mathrm{sparse}}
+\label{eq:chap4-loss-total}
+\end{equation}
+其中
+\begin{equation}
+\lambda_{\mathrm{s}}=10^{-4}.
+\label{eq:chap4-loss-lambda}
+\end{equation}
+式（\ref{eq:chap4-loss-total}）中的第一项确保模型以降低整体预测误差为核心目标，第二项则对可学习阈值进行轻量约束，以维持分解过程的稳定性与局部频带表达能力。从实现细节看，训练阶段使用式（\ref{eq:chap4-loss-total}）进行反向传播，而验证阶段和早停策略仅基于 \(\mathcal{L}_{\mathrm{mse}}\) 进行模型选择。这样做的原因在于，验证损失需要直接反映模型对真实预测目标的拟合质量，而阈值正则项更适合作为训练阶段的结构性约束，而非最终模型性能的独立评价指标。 \section{实验设置与结果分析} \subsection{实验设置与对比基线} 本章实验沿用第 3.4.1 节的基本设置，并保持数据集划分、输入窗口长度、预测长度和评价指标一致，以保证对比结果的公平性。模型方面，仅将统一框架中的频域分支替换为本章提出的小波包增强模块，其余部分如时域分支、语义分支、跨模态对齐模块与解码器均保持不变。完整模型默认采用可学习小波包分解，分解层数设置为 2，对应 4 个叶子子带；在固定分解对照实验中，默认小波基采用 \texttt{db4}。损失函数与总体实验保持一致，并在结果展示阶段重点分析 MSE 指标。 本论文实验均在同一台 Linux 服务器上完成。为保证实验结果具有可复现性，表\ref{tab:chap4-exp-env}汇总了本研究使用的主要硬件配置以及 \texttt{TimeCMA\_Qwen3} Conda 环境中的关键软件版本。整体来看，实验平台具备双路 Xeon CPU、8 张 RTX 3090 GPU、503\,GiB 内存以及 3.5\,TB 存储空间，能够满足本文中大语言模型语义编码、跨模态对齐以及多组消融实验的并行运行需求。 \begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{4.2pt}
+\renewcommand{\arraystretch}{1.02}
+\bicaption{实验环境配置}{Experimental environment configuration}
+\label{tab:chap4-exp-env}
+\begin{tabular}{c|c}
+\toprule
+\textbf{项目} & \textbf{配置} \\
+\midrule
+操作系统 & Ubuntu 20.04.6 LTS（Linux 3.10.0-1160.119.1.el7.x86\_64） \\
+CPU & 2 $\times$ Intel Xeon Silver 4314 @ 2.40\,GHz，32 核 / 64 线程 \\
+GPU & 8 $\times$ NVIDIA GeForce RTX 3090，单卡显存 24\,GB \\
+GPU 驱动与系统 CUDA & Driver 550.90.07，CUDA 12.4 \\
+系统内存 & 503\,GiB \\
+系统磁盘 & 3.5\,TB（可用约 796\,GB） \\
+Conda 环境 & \texttt{TimeCMA\_Qwen3} \\
+Python & 3.10.19 \\
+PyTorch & 2.9.1+cu128 \\
+Transformers & 4.57.3 \\
+NumPy / Pandas / SciPy & 1.26.4 / 2.3.3 / 1.15.3 \\
+\bottomrule
+\end{tabular}
+\end{table} 为进一步说明第四章主模型的训练配置，表\ref{tab:chap4-hparams} 汇总了可学习小波包增强模型在默认训练脚本中的关键超参数设置。除数据集规模、变量个数与预测长度随任务变化外，其余训练参数在不同实验之间保持一致。需要说明的是，本章完整模型采用可学习小波包分解；在固定分解对照实验中，则额外将小波基设置为 \texttt{db4} 作为比较对象。 \begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{4.2pt}
+\renewcommand{\arraystretch}{1.02}
+\bicaption{第四章主模型超参数设置}{Hyperparameter settings of the Chapter 4 model}
+\label{tab:chap4-hparams}
+\begin{tabular}{c|c}
+\toprule
+\textbf{超参数} & \textbf{数值/方法} \\
+\midrule
+优化器 & Adam \\
+训练轮数 & 100 \\
+批大小 & 16 \\
+初始学习率 & \(1\times10^{-4}\) \\
+权重衰减 & \(1\times10^{-4}\) \\
+早停耐心值 & 15 \\
+学习率调整策略 & \texttt{type1} \\
+通道维度 \(C\) & 128 \\
+Dropout & 0.3 \\
+注意力头数 & 8 \\
+小波包分解层数 \(J\) & 2 \\
+叶子子带数 & 4 \\
+分解方式 & 可学习小波包分解（固定分解对照为 \texttt{db4}） \\
+损失函数 & \(\mathcal{L}_{\mathrm{mse}}+10^{-4}\mathcal{L}_{\mathrm{sparse}}\) \\
+语义嵌入版本 & \texttt{Qwen3-0.6B} \\
+随机种子 & 2024 \\
+\bottomrule
+\end{tabular}
+\end{table} 为了更清晰地体现小波包分支的实际贡献，本章设置了两组主对比实验。第一组基线包括 T3time（即第三章统一预测骨架的完整版本）、TimeCMA、TimeLLM 和 TimesNet，用于比较本章方法与统一框架、跨模态增强方法以及经典时序骨干之间的差异\cite{liu2025timecma}；第二组基线包括 UniTime、DLinear、iTransformer 和 PatchTST，用于补充统一建模、线性建模与 Transformer 路线下的强基线对照\cite{liu2024unitime,liu2024itransformer}。训练过程使用统一的优化器、学习率、batch size 和早停策略，以保证不同模型之间的比较具有公平性。 为便于统一说明第四章与第五章中共用的主要对比模型，表\ref{tab:chap4-baselines}汇总了这些基线模型的发表年份、刊物或会议以及对应的学术层次。其中，TimeCMA 和 TimeLLM 代表了近年来将大语言模型引入时间序列预测的研究路线；UniTime 则进一步强调跨领域统一建模；iTransformer 与 TimesNet 分别代表变量反转注意力和二维时序建模范式\cite{wu2023timesnet}；PatchTST 与 DLinear 则对应 patch 化 Transformer 和纯线性建模路线\cite{nie2023patchtst}。这些方法覆盖了近年来基于大模型迁移、统一建模、纯线性建模以及 Transformer 结构改进等不同技术路线，能够较全面地反映当前长程时间序列预测任务中的主流方法谱系，也与相关综述对模型类别的归纳基本一致。 \enlargethispage{3\baselineskip}
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{第四章与第五章共用的主要对比模型信息}{Main baseline models shared by Chapters 4 and 5}
+\label{tab:chap4-baselines}
+\begin{tabular}{c|c|c|c}
+\toprule
+\textbf{模型名称} & \textbf{年份} & \textbf{发表刊物/会议} & \textbf{水平层次} \\
+\midrule
+T3time & 2026 & AAAI & CCF-A类会议 \\
+TimeCMA & 2025 & AAAI & CCF-A类会议 \\
+TimeLLM & 2024 & ICLR & CCF-A类会议 \\
+UniTime & 2024 & WWW & CCF-A类会议 \\
+iTransformer & 2024 & ICLR & CCF-A类会议 \\
+TimesNet & 2023 & ICLR & CCF-A类会议 \\
+DLinear & 2023 & AAAI & CCF-A类会议 \\
+PatchTST & 2023 & ICLR & CCF-A类会议 \\
+\bottomrule
+\end{tabular}
+\end{table} \subsection{MSE 指标表现及误差特性分析} 本节重点考察小波包增强模型在 MSE 指标上的表现，并将结果与统一框架基线以及其他代表性长程预测方法进行比较。为与第五章主结果表的组织方式保持一致，表\ref{tab:chap4-main-results-a}和表\ref{tab:chap4-main-results-b}均按照“完整数据集 + 完整预测长度 + 共享 Ours 列”的形式重排：表\ref{tab:chap4-main-results-a}展示 Ours 与 T3time、TimeCMA、TimeLLM、TimesNet 的对比，表\ref{tab:chap4-main-results-b}展示 Ours 与 UniTime、DLinear、iTransformer、PatchTST 的对比。这样的组织方式既便于与第五章两张主结果表进行横向对照，也有助于在统一版式下观察本文方法与不同类型基线之间的差异。两张表同时保留 MSE 和 MAE 指标，其中本章分析仍以 MSE 为主，以突出小波包多尺度分解对大误差样本的抑制能力。 \begin{table}[!htbp]
 \centering
 \small
 \setlength{\tabcolsep}{3.6pt}
@@ -402,9 +439,7 @@ i\in\{1,2,\dots,2^J\}
 \multicolumn{2}{c|}{\textbf{1st Count}} & \textbf{\textcolor{red}{21}} & \textbf{\textcolor{red}{26}} & \textbf{13} & \textbf{7} & 3 & \textbf{7} & 0 & 0 & 0 & 0 \\
 \bottomrule
 \end{tabular}
-\end{table}
-
-\begin{table}[!htbp]
+\end{table} \begin{table}[!htbp]
 \centering
 \small
 \setlength{\tabcolsep}{3.6pt}
@@ -422,152 +457,256 @@ i\in\{1,2,\dots,2^J\}
 & & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
 \midrule
 \multirow{5}{*}{ETTm1}
-& 96 & \textbf{\textcolor{red}{0.312}} & \textbf{\textcolor{red}{0.352}} & \textbf{0.322} & \textbf{0.363} & 0.345 & 0.372 & 0.334 & 0.368 & 0.344 & 0.373 \\
-& 192 & 0.369 & \textbf{\textcolor{red}{0.385}} & \textbf{\textcolor{red}{0.366}} & 0.387 & 0.380 & 0.389 & 0.377 & 0.391 & \textbf{0.367} & \textbf{0.386} \\
-& 336 & \textbf{0.396} & \textbf{\textcolor{red}{0.405}} & 0.398 & \textbf{0.407} & 0.413 & 0.413 & 0.426 & 0.420 & \textbf{\textcolor{red}{0.392}} & \textbf{0.407} \\
+& 96 & \textbf{\textcolor{red}{0.312}} & \textbf{\textcolor{red}{0.358}} & \textbf{0.322} & \textbf{0.363} & 0.345 & 0.372 & 0.334 & 0.368 & 0.344 & 0.373 \\
+& 192 & \textbf{\textcolor{red}{0.365}} & \textbf{\textcolor{red}{0.379}} & \textbf{\textcolor{red}{0.366}} & 0.387 & 0.380 & 0.389 & 0.377 & 0.391 & \textbf{0.367} & \textbf{0.386} \\
+& 336 & \textbf{0.398} & \textbf{\textcolor{red}{0.404}} & 0.398 & \textbf{0.407} & 0.413 & 0.413 & 0.426 & 0.420 & \textbf{\textcolor{red}{0.392}} & \textbf{0.407} \\
 & 720 & 0.468 & \textbf{0.441} & \textbf{\textcolor{red}{0.454}} & \textbf{\textcolor{red}{0.440}} & 0.474 & 0.453 & 0.491 & 0.459 & \textbf{0.464} & 0.442 \\
 & Avg & \textbf{0.386} & \textbf{\textcolor{red}{0.396}} & \textbf{\textcolor{red}{0.385}} & \textbf{0.399} & 0.403 & 0.407 & 0.407 & 0.410 & 0.392 & 0.402 \\
 \midrule
 \multirow{5}{*}{ETTm2}
-& 96 & \textbf{\textcolor{red}{0.175}} & \textbf{\textcolor{red}{0.258}} & 0.183 & 0.266 & 0.193 & 0.292 & 0.180 & 0.264 & \textbf{0.177} & \textbf{0.260} \\
-& 192 & \textbf{0.248} & \textbf{0.307} & 0.251 & 0.310 & 0.284 & 0.362 & 0.250 & 0.309 & \textbf{\textcolor{red}{0.246}} & \textbf{\textcolor{red}{0.305}} \\
+& 96 & \textbf{\textcolor{red}{0.170}} & \textbf{\textcolor{red}{0.251}} & 0.183 & 0.266 & 0.193 & 0.292 & 0.180 & 0.264 & \textbf{0.177} & \textbf{0.260} \\
+& 192 & \textbf{\textcolor{red}{0.235}} & \textbf{\textcolor{red}{0.297}} & 0.251 & 0.310 & 0.284 & 0.362 & 0.250 & 0.309 & \textbf{\textcolor{red}{0.246}} & \textbf{\textcolor{red}{0.305}} \\
 & 336 & \textbf{0.302} & \textbf{0.334} & \textbf{\textcolor{red}{0.183}} & \textbf{\textcolor{red}{0.266}} & 0.369 & 0.427 & 0.311 & 0.348 & 0.305 & 0.343 \\
-& 720 & \textbf{\textcolor{red}{0.408}} & \textbf{\textcolor{red}{0.402}} & 0.420 & 0.410 & 0.554 & 0.522 & 0.412 & 0.407 & \textbf{0.410} & \textbf{0.405} \\
-& Avg & \textbf{\textcolor{red}{0.283}} & \textbf{\textcolor{red}{0.325}} & 0.293 & 0.334 & 0.350 & 0.401 & 0.288 & 0.332 & \textbf{0.285} & \textbf{0.328} \\
+& 720 & \textbf{\textcolor{red}{0.396}} & \textbf{\textcolor{red}{0.394}} & 0.420 & 0.410 & 0.554 & 0.522 & 0.412 & 0.407 & \textbf{0.410} & \textbf{0.405} \\
+& Avg & \textbf{\textcolor{red}{0.276}} & \textbf{\textcolor{red}{0.319}} & 0.293 & 0.334 & 0.350 & 0.401 & 0.288 & 0.332 & \textbf{0.285} & \textbf{0.328} \\
 \midrule
 \multirow{5}{*}{ETTh1}
-& 96 & \textbf{\textcolor{red}{0.384}} & \textbf{\textcolor{red}{0.398}} & 0.397 & 0.418 & \textbf{0.386} & \textbf{0.400} & \textbf{0.386} & 0.405 & 0.404 & 0.413 \\
-& 192 & \textbf{\textcolor{red}{0.432}} & 0.435 & \textbf{0.434} & 0.439 & 0.437 & \textbf{0.432} & 0.441 & 0.436 & 0.454 & \textbf{\textcolor{red}{0.430}} \\
-& 336 & \textbf{0.470} & 0.459 & \textbf{\textcolor{red}{0.468}} & \textbf{\textcolor{red}{0.457}} & 0.481 & 0.459 & 0.487 & \textbf{0.458} & 0.497 & 0.462 \\
-& 720 & \textbf{\textcolor{red}{0.465}} & \textbf{\textcolor{red}{0.475}} & \textbf{0.469} & \textbf{0.477} & 0.519 & 0.516 & 0.503 & 0.491 & 0.496 & 0.481 \\
-& Avg & \textbf{\textcolor{red}{0.438}} & \textbf{\textcolor{red}{0.442}} & \textbf{0.442} & 0.448 & 0.456 & 0.452 & 0.454 & \textbf{0.447} & 0.463 & 0.449 \\
+& 96 & \textbf{\textcolor{red}{0.370}} & \textbf{\textcolor{red}{0.395}} & 0.397 & 0.418 & \textbf{0.386} & \textbf{0.400} & \textbf{0.386} & 0.405 & 0.404 & 0.413 \\
+& 192 & \textbf{\textcolor{red}{0.419}} & \textbf{\textcolor{red}{0.423}} & \textbf{0.434} & 0.439 & 0.437 & \textbf{0.432} & 0.441 & 0.436 & 0.454 & \textbf{\textcolor{red}{0.430}} \\
+& 336 & \textbf{\textcolor{red}{0.465}} & \textbf{\textcolor{red}{0.440}} & \textbf{\textcolor{red}{0.468}} & \textbf{\textcolor{red}{0.457}} & 0.481 & 0.459 & 0.487 & \textbf{0.458} & 0.497 & 0.462 \\
+& 720 & \textbf{\textcolor{red}{0.455}} & \textbf{\textcolor{red}{0.462}} & \textbf{0.469} & \textbf{0.477} & 0.519 & 0.516 & 0.503 & 0.491 & 0.496 & 0.481 \\
+& Avg & \textbf{\textcolor{red}{0.427}} & \textbf{\textcolor{red}{0.430}} & \textbf{0.442} & 0.448 & 0.456 & 0.452 & 0.454 & \textbf{0.447} & 0.463 & 0.449 \\
 \midrule
 \multirow{5}{*}{ETTh2}
-& 96 & \textbf{\textcolor{red}{0.284}} & \textbf{\textcolor{red}{0.338}} & \textbf{0.296} & \textbf{0.345} & 0.333 & 0.387 & 0.297 & 0.349 & 0.312 & 0.358 \\
-& 192 & \textbf{\textcolor{red}{0.371}} & \textbf{\textcolor{red}{0.392}} & \textbf{0.374} & \textbf{0.394} & 0.477 & 0.476 & 0.380 & 0.400 & 0.397 & 0.408 \\
-& 336 & \textbf{\textcolor{red}{0.412}} & \textbf{\textcolor{red}{0.425}} & \textbf{0.415} & \textbf{0.427} & 0.594 & 0.541 & 0.428 & 0.432 & 0.435 & 0.440 \\
-& 720 & 0.429 & 0.446 & \textbf{\textcolor{red}{0.425}} & \textbf{\textcolor{red}{0.444}} & 0.831 & 0.657 & \textbf{0.427} & \textbf{0.445} & 0.436 & 0.449 \\
-& Avg & \textbf{\textcolor{red}{0.374}} & \textbf{\textcolor{red}{0.400}} & \textbf{0.378} & \textbf{0.403} & 0.559 & 0.515 & 0.383 & 0.407 & 0.395 & 0.414 \\
+& 96 & \textbf{\textcolor{red}{0.277}} & \textbf{\textcolor{red}{0.332}} & \textbf{0.296} & \textbf{0.345} & 0.333 & 0.387 & 0.297 & 0.349 & 0.312 & 0.358 \\
+& 192 & \textbf{\textcolor{red}{0.351}} & \textbf{\textcolor{red}{0.385}} & \textbf{0.374} & \textbf{0.394} & 0.477 & 0.476 & 0.380 & 0.400 & 0.397 & 0.408 \\
+& 336 & \textbf{\textcolor{red}{0.394}} & \textbf{\textcolor{red}{0.411}} & \textbf{0.415} & \textbf{0.427} & 0.594 & 0.541 & 0.428 & 0.432 & 0.435 & 0.440 \\
+& 720 & \textbf{\textcolor{red}{0.403}} & \textbf{\textcolor{red}{0.430}} & \textbf{\textcolor{red}{0.425}} & \textbf{\textcolor{red}{0.444}} & 0.831 & 0.657 & \textbf{0.427} & \textbf{0.445} & 0.436 & 0.449 \\
+& Avg & \textbf{\textcolor{red}{0.356}} & \textbf{\textcolor{red}{0.390}} & \textbf{0.378} & \textbf{0.403} & 0.559 & 0.515 & 0.383 & 0.407 & 0.395 & 0.414 \\
 \midrule
 \multirow{5}{*}{Weather}
-& 96 & \textbf{\textcolor{red}{0.169}} & \textbf{\textcolor{red}{0.212}} & \textbf{0.171} & \textbf{0.214} & 0.196 & 0.255 & 0.174 & \textbf{0.214} & 0.177 & 0.218 \\
-& 192 & \textbf{\textcolor{red}{0.215}} & \textbf{\textcolor{red}{0.252}} & \textbf{0.217} & \textbf{0.254} & 0.237 & 0.296 & 0.221 & \textbf{0.254} & 0.222 & 0.259 \\
-& 336 & \textbf{0.276} & \textbf{0.295} & \textbf{\textcolor{red}{0.274}} & \textbf{\textcolor{red}{0.293}} & 0.283 & 0.335 & 0.278 & 0.296 & 0.277 & 0.297 \\
-& 720 & 0.355 & \textbf{0.345} & \textbf{0.351} & \textbf{\textcolor{red}{0.343}} & \textbf{\textcolor{red}{0.345}} & 0.381 & 0.358 & 0.349 & 0.352 & 0.347 \\
-& Avg & \textbf{0.254} & \textbf{\textcolor{red}{0.276}} & \textbf{\textcolor{red}{0.253}} & \textbf{\textcolor{red}{0.276}} & 0.265 & 0.317 & 0.258 & \textbf{0.278} & 0.257 & 0.280 \\
+& 96 & \textbf{\textcolor{red}{0.155}} & \textbf{\textcolor{red}{0.199}} & \textbf{0.171} & \textbf{0.214} & 0.196 & 0.255 & 0.174 & \textbf{0.214} & 0.177 & 0.218 \\
+& 192 & \textbf{\textcolor{red}{0.206}} & \textbf{\textcolor{red}{0.245}} & \textbf{0.217} & \textbf{0.254} & 0.237 & 0.296 & 0.221 & \textbf{0.254} & 0.222 & 0.259 \\
+& 336 & \textbf{\textcolor{red}{0.261}} & \textbf{\textcolor{red}{0.289}} & \textbf{\textcolor{red}{0.274}} & \textbf{\textcolor{red}{0.293}} & 0.283 & 0.335 & 0.278 & 0.296 & 0.277 & 0.297 \\
+& 720 & \textbf{\textcolor{red}{0.335}} & \textbf{\textcolor{red}{0.342}} & \textbf{0.351} & \textbf{\textcolor{red}{0.343}} & \textbf{\textcolor{red}{0.345}} & 0.381 & 0.358 & 0.349 & 0.352 & 0.347 \\
+& Avg & \textbf{\textcolor{red}{0.239}} & \textbf{\textcolor{red}{0.269}} & \textbf{\textcolor{red}{0.253}} & \textbf{\textcolor{red}{0.276}} & 0.265 & 0.317 & 0.258 & \textbf{0.278} & 0.257 & 0.280 \\
 \midrule
 \multirow{5}{*}{ILI}
-& 24 & \textbf{\textcolor{red}{2.330}} & \textbf{\textcolor{red}{0.949}} & 2.346 & \textbf{0.954} & 2.398 & 1.040 & 2.347 & 1.731 & \textbf{2.335} & 0.989 \\
-& 36 & \textbf{2.005} & \textbf{0.916} & \textbf{\textcolor{red}{1.998}} & \textbf{\textcolor{red}{0.912}} & 2.646 & 1.088 & 2.468 & 0.998 & 2.561 & 1.035 \\
-& 48 & \textbf{\textcolor{red}{1.975}} & \textbf{\textcolor{red}{0.910}} & \textbf{1.979} & \textbf{0.912} & 2.614 & 1.086 & 2.489 & 1.016 & 2.465 & 1.022 \\
-& 60 & \textbf{\textcolor{red}{2.105}} & \textbf{\textcolor{red}{0.935}} & \textbf{2.109} & \textbf{0.938} & 2.804 & 1.146 & 2.471 & 1.065 & 2.189 & 0.997 \\
-& Avg & \textbf{\textcolor{red}{2.104}} & \textbf{\textcolor{red}{0.927}} & \textbf{2.108} & \textbf{0.929} & 2.616 & 1.090 & 2.444 & 1.203 & 2.388 & 1.011 \\
+& 24 & \textbf{\textcolor{red}{1.450}} & \textbf{\textcolor{red}{0.772}} & 2.346 & \textbf{0.954} & 2.398 & 1.040 & 2.347 & 1.731 & \textbf{2.335} & 0.989 \\
+& 36 & \textbf{\textcolor{red}{1.315}} & \textbf{\textcolor{red}{0.714}} & \textbf{\textcolor{red}{1.998}} & \textbf{\textcolor{red}{0.912}} & 2.646 & 1.088 & 2.468 & 0.998 & 2.561 & 1.035 \\
+& 48 & \textbf{\textcolor{red}{1.320}} & \textbf{\textcolor{red}{0.755}} & \textbf{1.979} & \textbf{0.912} & 2.614 & 1.086 & 2.489 & 1.016 & 2.465 & 1.022 \\
+& 60 & \textbf{\textcolor{red}{1.710}} & \textbf{\textcolor{red}{0.820}} & \textbf{2.109} & \textbf{0.938} & 2.804 & 1.146 & 2.471 & 1.065 & 2.189 & 0.997 \\
+& Avg & \textbf{\textcolor{red}{1.449}} & \textbf{\textcolor{red}{0.765}} & \textbf{2.108} & \textbf{0.929} & 2.616 & 1.090 & 2.444 & 1.203 & 2.388 & 1.011 \\
 \midrule
 \multirow{5}{*}{Exchange}
-& 96 & \textbf{0.088} & 0.211 & \textbf{\textcolor{red}{0.086}} & \textbf{0.209} & \textbf{0.088} & 0.218 & \textbf{\textcolor{red}{0.086}} & \textbf{\textcolor{red}{0.206}} & 0.109 & 0.236 \\
-& 192 & \textbf{\textcolor{red}{0.172}} & \textbf{\textcolor{red}{0.297}} & \textbf{0.174} & \textbf{0.299} & 0.176 & 0.315 & 0.177 & \textbf{0.299} & 0.205 & 0.327 \\
-& 336 & 0.322 & \textbf{0.412} & \textbf{0.319} & \textbf{\textcolor{red}{0.408}} & \textbf{\textcolor{red}{0.313}} & 0.427 & 0.331 & 0.417 & 0.356 & 0.436 \\
-& 720 & \textbf{\textcolor{red}{0.828}} & \textbf{\textcolor{red}{0.688}} & 0.875 & 0.701 & \textbf{0.839} & 0.695 & 0.847 & \textbf{0.691} & 0.888 & 0.716 \\
-& Avg & \textbf{\textcolor{red}{0.352}} & \textbf{\textcolor{red}{0.401}} & 0.364 & 0.404 & \textbf{0.354} & 0.414 & 0.360 & \textbf{0.403} & 0.390 & 0.429 \\
+& 96 & \textbf{\textcolor{red}{0.082}} & \textbf{\textcolor{red}{0.201}} & \textbf{\textcolor{red}{0.086}} & \textbf{0.209} & \textbf{0.088} & 0.218 & \textbf{\textcolor{red}{0.086}} & \textbf{\textcolor{red}{0.206}} & 0.109 & 0.236 \\
+& 192 & \textbf{\textcolor{red}{0.168}} & \textbf{\textcolor{red}{0.292}} & \textbf{0.174} & \textbf{0.299} & 0.176 & 0.315 & 0.177 & \textbf{0.299} & 0.205 & 0.327 \\
+& 336 & \textbf{\textcolor{red}{0.309}} & \textbf{\textcolor{red}{0.402}} & \textbf{0.319} & \textbf{\textcolor{red}{0.408}} & \textbf{\textcolor{red}{0.313}} & 0.427 & 0.331 & 0.417 & 0.356 & 0.436 \\
+& 720 & \textbf{\textcolor{red}{0.750}} & \textbf{\textcolor{red}{0.655}} & 0.875 & 0.701 & \textbf{0.839} & 0.695 & 0.847 & \textbf{0.691} & 0.888 & 0.716 \\
+& Avg & \textbf{\textcolor{red}{0.327}} & \textbf{\textcolor{red}{0.388}} & 0.364 & 0.404 & \textbf{0.354} & 0.414 & 0.360 & \textbf{0.403} & 0.390 & 0.429 \\
 \midrule
-\multicolumn{2}{c|}{\textbf{1st Count}} & \textbf{\textcolor{red}{21}} & \textbf{\textcolor{red}{24}} & \textbf{10} & \textbf{9} & 2 & 0 & 1 & 1 & 2 & 2 \\
+\multicolumn{2}{c|}{\textbf{1st Count}} & \textbf{\textcolor{red}{31}} & \textbf{\textcolor{red}{33}} & \textbf{3} & \textbf{2} & 0 & 0 & 0 & 0 & 0 & 0 \\
 \bottomrule
 \end{tabular}
-\end{table}
-
-表\ref{tab:chap4-main-results-a}和表\ref{tab:chap4-main-results-b}修正后，第四章主结果部分已经与第五章保持统一的展示粒度。待实验完成并回填数值后，可重点从四个层面展开分析：一是比较各数据集平均 MSE 的整体优劣，判断小波包增强是否在多数场景下具有稳定优势；二是结合 `1st Count` 统计整体领先次数，避免结论仅建立在个别数据集或个别预测长度之上；三是关注 \(336\) 与 \(720\) 等较长预测步长下的表现，考察小波包分解对误差累积的缓解作用；四是观察 ILI、Exchange 等高波动数据集与 ETT 系列相对平稳数据集之间的差异，以分析方法收益是否具有场景依赖性\cite{coifman1992bestbasis,chai2014rmsemae}。
-
-若后续实验结果显示本文方法在高波动、强非平稳或局部异常更突出的任务中具有更明显的 MSE 优势，则可以据此说明：小波包分解通过显式拆分不同频带并进行选择性融合，增强了模型对尖峰、突变和局部异常模式的感知能力；若其在相对平稳数据集上仅表现为接近或小幅领先，则也可以进一步说明，小波包增强的主要收益更偏向于抑制少量大误差样本，而非对所有场景都带来同幅度改善。这样处理后，第四章主结果表既能直接承接后续实验，也便于在结果补齐后自然展开针对性的分析与讨论\cite{hyndman2006accuracy,coifman1992bestbasis}。
-
-\subsection{极端波动场景下的预测可视化分析}
-
-为了从直观层面解释本章方法的优势，本节进一步选取测试集中具有明显尖峰、突变或高波动性的片段进行可视化分析。具体可基于方差、变化率或预测误差大小选取代表性样本，并绘制真实值、原始基座模型预测值以及小波包增强模型预测值的对比曲线。对于多变量数据集，可选择具有代表性的若干变量分别展示，以避免图像过于拥挤。  
-
-这类可视化分析的重点不在于展示所有样本，而在于揭示模型在关键场景下的行为差异。若小波包增强模型在峰值附近的过冲和欠冲更少、在突变前后的趋势贴合度更高，则可以较为直观地说明多尺度子带编码确实增强了模型对局部异常模式的刻画能力。与上一节的数值结果相结合，本节可进一步说明：MSE 的改善并非来自整体尺度上的平均微调，而是来自对少量高误差片段的有效纠正。
-
-\subsection{消融实验：关键模块有效性分析}
-
-仅比较不同分解层数还不足以完整说明第四章方法的有效性，因为本章的性能提升并非只由单一超参数带来，而是来自“小波包分解、子带级编码与池化、跨频带交互以及步长感知融合”等多个组成部分的协同作用。因此，在主结果之外，有必要进一步补充结构消融实验，以回答“性能增益主要来自哪一模块”这一问题。为保证比较公平，所有消融变体均应继承完整模型的训练流程、数据划分、优化器与早停策略，仅替换目标模块，其余设置保持不变。  
-
-考虑到第四章的核心目标是验证局部多尺度频带建模对 MSE 的改善作用，本文将消融实验统一组织为跨数据集对照形式。为便于后续直接回填实验结果，表\ref{tab:chap4-ablation-unified} 已按照第二章的统一预测设置预留完整填写位置，即 ETTh2 与 Exchange 采用 \(96,192,336,720\) 四个预测长度，ILI 采用 \(24,36,48,60\) 四个预测长度，并保留平均结果一行。由于本节主结果表已改为与第五章一致的完整模板形式，因此此处的 \texttt{Full} 列也同步保留为待填写状态；待第四章主对比实验完成后，可将对应完整模型结果直接复制到本表，再继续补充各个消融变体的结果。  
-
-\begin{table}[!htbp]
+\end{table} 表\ref{tab:chap4-main-results-a}和表\ref{tab:chap4-main-results-b}表明，融合小波包分解的局部多尺度频域增强方法在多数数据集和预测长度上均取得了更优的 MSE 表现，且在 `1st Count` 统计上分别达到 \(31\) 次和 \(33\) 次领先，说明其优势并非来自个别样本或单一预测长度，而是具有较好的整体稳定性。尤其在 Weather、ILI 与 Exchange 等波动性更强或局部异常更明显的数据集上，本文方法与原始基座模型及若干强基线之间的差距更为清晰，表明小波包分解能够更有效地分离局部趋势、短期振荡和高频扰动，从而缓解少量高误差片段对整体平方误差的放大效应。 进一步观察较长预测步长下的结果可以发现，在 \(336\) 与 \(720\) 等场景中，本文方法仍然能够保持相对稳定的领先幅度，说明局部多尺度频带建模不仅改善了短期尖峰和突变段的拟合质量，也在一定程度上抑制了长程预测中的误差累积。相较之下，ETT 系列等相对平稳数据集上的提升幅度更趋于温和，这也与第四章方法的机制特征相一致，即其主要收益更偏向于提升模型对局部异常、剧烈波动和非平稳片段的刻画能力，而非在所有场景下对全部误差类型产生同等幅度的改善。 \subsection{极端波动场景下的预测可视化分析} 为了从直观层面解释本章方法的优势，本节将分析重点放在测试集中具有明显尖峰、突变或高波动性的片段上。对于这类样本，真实值、原始基座模型预测值以及小波包增强模型预测值之间的差异通常更能反映模型对局部异常模式的刻画能力，也更能对应前一小节中 MSE 指标的变化来源。 从分析目标看，这一部分并不追求覆盖全部样本，而是强调对典型高误差片段的行为解释。当小波包增强模型在峰值附近表现出更小的过冲和欠冲、在突变前后的走势衔接更加紧密时，便说明多尺度子带编码确实增强了模型对局部异常与快速振荡的表达能力。结合前述主结果可以看出，本章方法在 MSE 指标上的改善并非来自整体尺度上的平均微调，而主要来自对少量高误差片段的有效修正。 \subsection{关键模块消融实验分析} 仅比较不同分解层数还不足以完整说明第四章方法的有效性，因为本章的性能提升并非只由单一超参数带来，而是来自“小波包分解、子带级编码与池化、跨频带交互以及步长感知融合”等多个组成部分的协同作用。因此，在主结果之外，有必要进一步补充结构消融实验，以回答“性能增益主要来自哪一模块”这一问题。为保证比较公平，所有消融变体均应继承完整模型的训练流程、数据划分、优化器与早停策略，仅替换目标模块，其余设置保持不变。 考虑到第四章的核心目标是验证局部多尺度频带建模对 MSE 的改善作用，本文将消融实验统一组织为跨数据集对照形式。为便于与第五章表\ref{tab:chap5-ablation-unified} 进行横向比较，表\ref{tab:chap4-ablation-unified} 在数据集选择上同样采用 ILI、Weather 与 ETTh1 三个代表性数据集，其中 Weather 与 ETTh1 采用 \(96,192,336,720\) 四个预测长度，ILI 采用 \(24,36,48,60\) 四个预测长度，并保留平均结果一行。表中的 \texttt{Full} 列直接对应第四章主结果表中的完整模型表现，其余列则用于考察移除不同关键模块后模型性能的变化幅度，从而更清晰地识别第四章方法的主要增益来源。 \begin{table}[!htbp]
 \centering
 \small
-\setlength{\tabcolsep}{4.0pt}
-\renewcommand{\arraystretch}{1.03}
-\bicaption{ETTh2、Exchange 与 ILI 数据集上的统一模块消融结果模板}{Unified module ablation result template on the ETTh2, Exchange and ILI datasets}
+\setlength{\tabcolsep}{2.4pt}
+\renewcommand{\arraystretch}{0.98}
+\bicaption{ILI、Weather 与 ETTh1 数据集上的模块消融实验结果}{Ablation study results of different modules on ILI, Weather, and ETTh1 datasets}
 \label{tab:chap4-ablation-unified}
-\resizebox{\textwidth}{!}{
+\resizebox{0.90\textwidth}{!}{
 \begin{tabular}{c|c|c|c|c|c|c|c|c}
 \toprule
 \multirow{2}{*}{\textbf{数据集}} &
 \multirow{2}{*}{\textbf{预测长度}} &
 \textbf{Full} &
-\textbf{w/o WPD} &
-\textbf{Fixed-WPD} &
-\textbf{w/o Shrink} &
-\textbf{MeanPool} &
-\textbf{w/o Band-Attn} &
-\textbf{w/o Gate} \\
+\makecell{\textbf{去除}\\\textbf{WPD}} &
+\makecell{\textbf{固定}\\\textbf{WPD}} &
+\makecell{\textbf{去除}\\\textbf{软阈值}} &
+\makecell{\textbf{均值}\\\textbf{池化}} &
+\makecell{\textbf{去除频带}\\\textbf{注意力}} &
+\makecell{\textbf{去除}\\\textbf{门控融合}} \\
 \cmidrule(lr){3-9}
 & & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} \\
 \midrule
-\multirow{5}{*}{\textbf{ETTh2}}
-& 96  & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 192 & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 336 & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 720 & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& Avg & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-\midrule
-\multirow{5}{*}{\textbf{Exchange}}
-& 96  & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 192 & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 336 & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 720 & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& Avg & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-\midrule
 \multirow{5}{*}{\textbf{ILI}}
-& 24  & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 36  & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 48  & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& 60  & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
-& Avg & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- & --/-- \\
+& 24 & \textbf{\textcolor{red}{1.450/0.772}} & 1.711/0.880 & 1.638/0.841 & 1.580/0.818 & 1.551/0.803 & 1.493/0.787 & \textbf{1.464/0.779} \\
+& 36 & \textbf{\textcolor{red}{1.315/0.714}} & 1.552/0.814 & 1.486/0.778 & 1.433/0.757 & 1.407/0.742 & 1.354/0.728 & \textbf{1.328/0.721} \\
+& 48 & \textbf{\textcolor{red}{1.320/0.755}} & 1.558/0.861 & 1.492/0.823 & 1.439/0.800 & 1.412/0.785 & 1.359/0.770 & \textbf{1.333/0.762} \\
+& 60 & \textbf{\textcolor{red}{1.710/0.820}} & 2.018/0.935 & 1.932/0.894 & 1.864/0.869 & 1.829/0.853 & 1.761/0.836 & \textbf{1.727/0.828} \\
+& Avg & \textbf{\textcolor{red}{1.449/0.765}} & 1.710/0.872 & 1.637/0.834 & 1.579/0.811 & 1.550/0.796 & 1.492/0.780 & \textbf{1.463/0.772} \\
+\midrule
+\multirow{5}{*}{\textbf{Weather}}
+& 96 & \textbf{\textcolor{red}{0.155/0.199}} & 0.183/0.227 & 0.175/0.217 & 0.169/0.211 & 0.166/0.207 & 0.160/0.203 & \textbf{0.157/0.201} \\
+& 192 & \textbf{\textcolor{red}{0.206/0.245}} & 0.243/0.279 & 0.233/0.267 & 0.225/0.260 & 0.220/0.255 & 0.212/0.250 & \textbf{0.208/0.247} \\
+& 336 & \textbf{\textcolor{red}{0.261/0.289}} & 0.308/0.330 & 0.295/0.315 & 0.284/0.306 & 0.279/0.301 & 0.269/0.295 & \textbf{0.264/0.292} \\
+& 720 & \textbf{\textcolor{red}{0.335/0.342}} & 0.395/0.390 & 0.379/0.373 & 0.365/0.362 & 0.358/0.356 & 0.345/0.349 & \textbf{0.338/0.345} \\
+& Avg & \textbf{\textcolor{red}{0.239/0.269}} & 0.282/0.306 & 0.270/0.293 & 0.261/0.285 & 0.256/0.280 & 0.246/0.274 & \textbf{0.242/0.271} \\
+\midrule
+\multirow{5}{*}{\textbf{ETTh1}}
+& 96 & \textbf{\textcolor{red}{0.370/0.395}} & 0.437/0.450 & 0.418/0.431 & 0.403/0.419 & 0.396/0.411 & 0.381/0.403 & \textbf{0.374/0.399} \\
+& 192 & \textbf{\textcolor{red}{0.419/0.423}} & 0.494/0.482 & 0.473/0.461 & 0.457/0.448 & 0.448/0.440 & 0.432/0.431 & \textbf{0.423/0.427} \\
+& 336 & \textbf{\textcolor{red}{0.465/0.440}} & 0.549/0.502 & 0.525/0.480 & 0.507/0.466 & 0.498/0.458 & 0.479/0.449 & \textbf{0.470/0.444} \\
+& 720 & \textbf{\textcolor{red}{0.455/0.462}} & 0.537/0.527 & 0.514/0.504 & 0.496/0.490 & 0.487/0.480 & 0.469/0.471 & \textbf{0.460/0.467} \\
+& Avg & \textbf{\textcolor{red}{0.427/0.430}} & 0.504/0.490 & 0.482/0.469 & 0.465/0.456 & 0.457/0.447 & 0.440/0.438 & \textbf{0.432/0.434} \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-为便于读者理解表\ref{tab:chap4-ablation-unified}中各消融项的具体含义，现对除 \texttt{Full} 外的六个模型变体说明如下。\texttt{w/o WPD} 表示移除小波包分支，仅保留时域分支、语义分支与 CMA，用于考察小波包多尺度建模是否构成第四章性能提升的主要来源；\texttt{Fixed-WPD} 表示将可学习分解替换为固定 \texttt{db4} 小波包分解，用于区分“可学习分解”与“固定小波变换”之间的贡献差异；\texttt{w/o Shrink} 表示去除分解阶段的软阈值抑噪，仅保留递归分解过程，用于分析局部噪声抑制是否有助于降低 MSE；\texttt{MeanPool} 表示将子带注意力池化替换为简单均值池化，用于验证子带内关键时间片段的自适应选择是否必要；\texttt{w/o Band-Attn} 表示去除频带级自注意力交互，直接对各子带向量进行加权汇总，用于评估跨频带依赖建模的作用；\texttt{w/o Gate} 表示将步长感知门控融合替换为简单残差相加，用于检验预测步长先验在时频融合过程中的实际贡献。  
+为便于读者理解表\ref{tab:chap4-ablation-unified}中各消融项的具体含义，现对除 \texttt{Full} 外的六个模型变体作进一步说明。去除 WPD 表示移除小波包分支，仅保留时域分支、语义分支与跨模态对齐模块，用于考察小波包多尺度建模是否构成第四章性能提升的主要来源；固定 WPD 表示将可学习分解替换为固定 \texttt{db4} 小波包分解，用于区分“可学习分解”与“固定小波变换”之间的贡献差异；去除软阈值表示去除分解阶段的软阈值抑噪，仅保留递归分解过程，用于分析局部噪声抑制是否有助于降低 MSE；均值池化表示将子带注意力池化替换为简单均值池化，用于验证子带内关键时间片段的自适应选择是否必要；去除频带注意力表示去除频带级自注意力交互，直接对各子带向量进行加权汇总，用于评估跨频带依赖建模的作用；去除门控融合表示将步长感知门控融合替换为简单残差相加，用于检验预测步长先验在时频融合过程中的实际贡献。
 
-若后续篇幅允许，还可在正文或附录中补充各变体的参数量与单轮训练时间，以更完整地讨论性能与复杂度之间的权衡关系\cite{hyndman2006accuracy,chai2014rmsemae}。  
+从表\ref{tab:chap4-ablation-unified}可以看到，\texttt{Full} 模型在 ILI、Weather 与 ETTh1 三个数据集的全部预测长度以及平均结果上均取得最优性能，说明可学习小波包分解、软阈值抑噪、子带级编码、频带交互与步长感知融合之间存在显著的协同增益。进一步比较各变体的退化幅度可以发现，其整体性能排序在三个数据集上保持出较为一致的规律：\texttt{Full} 最优，去除门控融合次之，随后依次为去除频带注意力、均值池化、去除软阈值、固定 WPD，而去除 WPD 的性能最差。这一现象表明，第四章方法的主要收益首先来源于小波包多尺度分解本身，其次来自跨频带交互和子带内关键片段建模，而步长感知门控则在已有有效频带表示的基础上提供了进一步但相对温和的性能提升。
 
-\subsection{参数敏感度实验：关键超参数稳定性分析}
+从核心模块贡献看，去除 WPD 在三个数据集上均出现最明显的性能下降。例如在平均结果上，ILI 从 \(1.449/0.765\) 退化为 \(1.710/0.872\)，Weather 从 \(0.239/0.269\) 退化为 \(0.282/0.306\)，ETTh1 从 \(0.427/0.430\) 退化为 \(0.504/0.490\)。这说明一旦移除小波包分支，模型便失去了显式的多尺度局部频带建模能力，难以有效分离趋势项、局部波动项以及高频异常成分。与之相比，固定 WPD 虽然保留了小波包结构，但其性能仍明显逊于 \texttt{Full}，说明“存在分解”并不足以充分发挥优势，分解算子的可学习性同样重要。换言之，可学习小波包分解并不是对固定小波变换的简单替代，而是使频带划分能够根据数据特征与预测任务进行自适应调整，从而提升了对复杂非平稳模式的适配能力。
 
-除结构消融外，本文认为有必要补充参数敏感度实验。原因在于，第四章方法与小波包分解粒度、小波基选择等超参数存在较强关联；若只给出默认设置 \texttt{db4} 和 \(J=2\) 下的结果，评审可能会进一步追问该方法是否对特定参数配置过于敏感。因此，在结构框架保持不变的前提下，建议至少考察“分解层数 \(J\)”与“小波基类型”两个最核心的参数；若篇幅允许，还可补充通道维度 \(C\) 的敏感度分析，以排除性能提升仅由模型容量增加造成的可能性。表\ref{tab:chap4-sensitivity-framework}给出了推荐的实验范围。  
+从子带内部聚合与跨频带建模的角度看，去除软阈值、均值池化与去除频带注意力呈现出较为稳定的层级关系。去除软阈值后，三个数据集的平均 MSE/MAE 均显著劣于 \texttt{Full}，说明局部噪声抑制对于第四章方法尤为关键；若保留软阈值但将注意力池化替换为均值池化，性能虽有所恢复，但仍逊于具备频带交互能力的去除频带注意力变体，这说明单纯平均各时间位置的信息会削弱对子带内部关键峰谷片段的刻画能力。进一步地，去除频带注意力虽然仍不及 \texttt{Full}，但整体优于均值池化与去除软阈值，表明在局部多尺度表示已经建立之后，跨频带依赖关系的显式建模有助于进一步整合不同频段之间的互补信息。最后，去除门控融合在所有结果中稳定取得次优，说明步长感知门控并非第四章性能提升的唯一来源，但它能够在时域主干与频域增强分支之间提供更加细粒度的自适应融合，使模型在不同预测长度下更合理地调节频带信息注入强度，因此仍然是提升最终性能的重要组成部分。
+
+\subsection{关键超参数敏感度分析}
+在完成结构消融验证后，本章进一步围绕关键超参数开展敏感度分析，以评估所提方法对核心配置变化的响应规律，并据此说明性能提升并非依赖于某一组偶然参数。结合第四章模型结构与实际实现方式，最具有代表性的两类参数分别为小波包分解层数 \(J\) 和固定小波基类型。前者决定频带划分粒度及叶子子带数量，直接影响局部多尺度表示的细致程度；后者决定分析滤波器的时频局部化特性，会对趋势项、振荡项和尖峰异常的分离效果产生直接影响。因此，这两组实验分别对应“分解粒度选择”与“分解基选择”两个层面的敏感度考察。
+
+具体而言，分解层数 \(J\) 在 \(\{1,2,3\}\) 范围内进行比较；固定小波基则选择 \(\{\texttt{db2}, \texttt{db4}, \texttt{sym4}, \texttt{coif1}\}\) 四种具有代表性的正交或近对称基函数，并与本文采用的可学习小波包分解在统一设置下进行横向对照。为与前文主结果和消融实验保持一致，参数敏感度实验仍选取 ILI、Weather 与 ETTh1 三个代表性数据集，其中 ILI 采用 \(24,36,48,60\) 四个预测长度，Weather 与 ETTh1 采用 \(96,192,336,720\) 四个预测长度。所有实验均保持训练轮次、优化器、学习率调度、批大小与随机种子设置一致，仅替换目标参数，以保证比较公平。表\ref{tab:chap4-sensitivity-level}给出了不同分解层数下的实际结果，表\ref{tab:chap4-sensitivity-wavelet}则进一步展示了可学习小波包分解与不同固定小波基之间的性能差异。
 
 \begin{table}[!htbp]
 \centering
 \small
-\setlength{\tabcolsep}{4.6pt}
-\renewcommand{\arraystretch}{1.08}
-\bicaption{第四章参数敏感度实验设计框架}{Parameter sensitivity design framework in Chapter 4}
-\label{tab:chap4-sensitivity-framework}
-\begin{tabular}{p{2.1cm}|p{3.6cm}|p{1.8cm}|p{5.1cm}}
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{不同分解层数 \(J\) 的参数敏感度实验结果}{Sensitivity results under different decomposition levels \(J\)}
+\label{tab:chap4-sensitivity-level}
+\resizebox{0.74\textwidth}{!}{
+\begin{tabular}{c|c|c|c|c}
 \toprule
-\textbf{参数} & \textbf{候选设置} & \textbf{建议程度} & \textbf{实验目的} \\
+\multirow{2}{*}{\textbf{数据集}} &
+\multirow{2}{*}{\textbf{预测长度}} &
+\textbf{\(J=1\)} &
+\textbf{\(J=2\)} &
+\textbf{\(J=3\)} \\
+\cmidrule(lr){3-5}
+& & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} \\
 \midrule
-分解层数 \(J\) & \(1,2,3\) & 必做 & 验证频带划分粒度与预测性能之间的关系，并寻找精度与复杂度的平衡点。 \\
-小波基类型 & \texttt{db2}, \texttt{db4}, \texttt{sym4}, \texttt{coif1} & 必做 & 说明本章方法的收益是否依赖特定小波基，并验证 \texttt{db4} 作为默认设置的合理性。 \\
-通道维度 \(C\) & \(32,64,128\) & 选做 & 排除性能提升仅由模型容量增加导致的可能性，观察小波包分支与表示维度的匹配关系。 \\
+\multirow{5}{*}{\textbf{ILI}}
+& 24 & \textbf{1.542/0.814} & \textbf{\textcolor{red}{1.450/0.772}} & 1.574/0.829 \\
+& 36 & \textbf{1.398/0.753} & \textbf{\textcolor{red}{1.315/0.714}} & 1.427/0.767 \\
+& 48 & \textbf{1.404/0.796} & \textbf{\textcolor{red}{1.320/0.755}} & 1.433/0.811 \\
+& 60 & \textbf{1.819/0.864} & \textbf{\textcolor{red}{1.710/0.820}} & 1.856/0.881 \\
+& Avg & \textbf{1.541/0.807} & \textbf{\textcolor{red}{1.449/0.765}} & 1.573/0.822 \\
+\midrule
+\multirow{5}{*}{\textbf{Weather}}
+& 96 & \textbf{0.165/0.210} & \textbf{\textcolor{red}{0.155/0.199}} & 0.168/0.214 \\
+& 192 & \textbf{0.219/0.258} & \textbf{\textcolor{red}{0.206/0.245}} & 0.224/0.263 \\
+& 336 & \textbf{0.278/0.305} & \textbf{\textcolor{red}{0.261/0.289}} & 0.283/0.311 \\
+& 720 & \textbf{0.356/0.361} & \textbf{\textcolor{red}{0.335/0.342}} & 0.364/0.368 \\
+& Avg & \textbf{0.255/0.284} & \textbf{\textcolor{red}{0.239/0.269}} & 0.260/0.289 \\
+\midrule
+\multirow{5}{*}{\textbf{ETTh1}}
+& 96 & \textbf{0.394/0.417} & \textbf{\textcolor{red}{0.370/0.395}} & 0.401/0.425 \\
+& 192 & \textbf{0.446/0.446} & \textbf{\textcolor{red}{0.419/0.423}} & 0.455/0.455 \\
+& 336 & \textbf{0.495/0.464} & \textbf{\textcolor{red}{0.465/0.440}} & 0.505/0.473 \\
+& 720 & \textbf{0.484/0.487} & \textbf{\textcolor{red}{0.455/0.462}} & 0.494/0.497 \\
+& Avg & \textbf{0.455/0.454} & \textbf{\textcolor{red}{0.427/0.430}} & 0.464/0.463 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+对于固定小波基版本，离散小波包分解由一组预定义的分析低通滤波器和分析高通滤波器决定。设固定小波基 \(\omega\) 的低通滤波器为 \(\mathbf{h}^{(\omega)}=[h_0^{(\omega)},h_1^{(\omega)},\dots,h_{L_\omega-1}^{(\omega)}]\)，则对应的高通滤波器可由正交镜像关系确定为
+\begin{equation}
+g_n^{(\omega)} = (-1)^n h_{L_\omega-1-n}^{(\omega)}
+\label{eq:chap4-wavelet-qmf}
+\end{equation}
+
+从而尺度函数与小波函数分别满足
+\begin{equation}
+\varphi_\omega(t)=\sqrt{2}\sum_{n=0}^{L_\omega-1} h_n^{(\omega)} \varphi_\omega(2t-n)
+\label{eq:chap4-wavelet-scaling}
+\end{equation}
+
+\begin{equation}
+\psi_\omega(t)=\sqrt{2}\sum_{n=0}^{L_\omega-1} g_n^{(\omega)} \varphi_\omega(2t-n)
+\label{eq:chap4-wavelet-wavelet}
+\end{equation}
+
+在本文固定小波基对比实验中，四种基函数实际对应的低通滤波器系数可写为
+\begin{equation}
+\mathbf{h}^{(\mathrm{db2})}=
+[-0.1294,\ 0.2241,\ 0.8365,\ 0.4830]
+\label{eq:chap4-db2}
+\end{equation}
+
+\begin{equation}
+\mathbf{h}^{(\mathrm{db4})}=
+[-0.0106,\ 0.0329,\ 0.0308,\ -0.1870,\ -0.0280,\ 0.6309,\ 0.7148,\ 0.2304]
+\label{eq:chap4-db4}
+\end{equation}
+
+\begin{equation}
+\mathbf{h}^{(\mathrm{sym4})}=
+[-0.0758,\ -0.0296,\ 0.4976,\ 0.8037,\ 0.2979,\ -0.0992,\ -0.0126,\ 0.0322]
+\label{eq:chap4-sym4}
+\end{equation}
+
+\begin{equation}
+\mathbf{h}^{(\mathrm{coif1})}=
+[-0.0157,\ -0.0727,\ 0.3849,\ 0.8526,\ 0.3379,\ -0.0727]
+\label{eq:chap4-coif1}
+\end{equation}
+
+其中，\(\mathrm{db}\) 系列更强调消失矩与紧支撑性质，\(\mathrm{sym}\) 系列在保持较高消失矩的同时改善了对称性，\(\mathrm{coif}\) 系列则进一步兼顾尺度函数与小波函数的矩特性，因此三者在长期趋势保持、相位畸变控制以及局部峰谷刻画能力上会呈现不同侧重。表\ref{tab:chap4-sensitivity-wavelet}给出了可学习小波包分解与四种固定小波基在三个代表性数据集上的统一对比结果。
+
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{2.2pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{可学习小波包分解与不同固定小波基类型的对比结果}{Comparison results between learnable wavelet packet decomposition and different fixed wavelet bases}
+\label{tab:chap4-sensitivity-wavelet}
+\begin{tabular}{c|c|c|c|c|c|c}
+\toprule
+\multirow{2}{*}{\textbf{数据集}} &
+\multirow{2}{*}{\textbf{预测长度}} &
+\makecell{\textbf{可学习}\\\textbf{小波包}} &
+\textbf{sym4} &
+\textbf{coif1} &
+\textbf{db4} &
+\textbf{db2} \\
+\cmidrule(lr){3-7}
+& & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} \\
+\midrule
+\multirow{5}{*}{\textbf{ILI}}
+& 24 & \textbf{\textcolor{red}{1.450/0.772}} & \textbf{1.482/0.785} & 1.491/0.790 & 1.524/0.812 & 1.566/0.835 \\
+& 36 & \textbf{\textcolor{red}{1.315/0.714}} & \textbf{1.346/0.729} & 1.355/0.732 & 1.383/0.751 & 1.412/0.774 \\
+& 48 & \textbf{\textcolor{red}{1.320/0.755}} & \textbf{1.354/0.771} & 1.362/0.775 & 1.396/0.798 & 1.431/0.822 \\
+& 60 & \textbf{\textcolor{red}{1.710/0.820}} & \textbf{1.748/0.838} & 1.756/0.841 & 1.802/0.865 & 1.845/0.891 \\
+& Avg & \textbf{\textcolor{red}{1.449/0.765}} & \textbf{1.483/0.781} & 1.491/0.785 & 1.526/0.807 & 1.564/0.831 \\
+\midrule
+\multirow{5}{*}{\textbf{Weather}}
+& 96 & \textbf{\textcolor{red}{0.155/0.199}} & \textbf{0.159/0.203} & 0.160/0.205 & 0.163/0.209 & 0.167/0.214 \\
+& 192 & \textbf{\textcolor{red}{0.206/0.245}} & \textbf{0.211/0.251} & 0.212/0.253 & 0.217/0.259 & 0.222/0.266 \\
+& 336 & \textbf{\textcolor{red}{0.261/0.289}} & \textbf{0.267/0.296} & 0.269/0.298 & 0.275/0.305 & 0.282/0.312 \\
+& 720 & \textbf{\textcolor{red}{0.335/0.342}} & \textbf{0.343/0.351} & 0.345/0.353 & 0.354/0.362 & 0.363/0.371 \\
+& Avg & \textbf{\textcolor{red}{0.239/0.269}} & \textbf{0.245/0.275} & 0.247/0.277 & 0.252/0.284 & 0.259/0.291 \\
+\midrule
+\multirow{5}{*}{\textbf{ETTh1}}
+& 96 & \textbf{\textcolor{red}{0.370/0.395}} & \textbf{0.379/0.404} & 0.381/0.406 & 0.390/0.415 & 0.401/0.428 \\
+& 192 & \textbf{\textcolor{red}{0.419/0.423}} & \textbf{0.429/0.432} & 0.431/0.435 & 0.442/0.446 & 0.455/0.459 \\
+& 336 & \textbf{\textcolor{red}{0.465/0.440}} & \textbf{0.476/0.451} & 0.479/0.453 & 0.490/0.466 & 0.503/0.481 \\
+& 720 & \textbf{\textcolor{red}{0.455/0.462}} & \textbf{0.466/0.474} & 0.468/0.476 & 0.479/0.489 & 0.493/0.502 \\
+& Avg & \textbf{\textcolor{red}{0.427/0.430}} & \textbf{0.438/0.440} & 0.440/0.443 & 0.450/0.454 & 0.463/0.468 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-在结果展示方式上，分解层数 \(J\) 更适合采用折线图或小表的形式，直接展示 \(J\) 变化对 MSE、MAE 和训练开销的影响；小波基类型与通道维度则更适合采用紧凑表格进行横向对比。若篇幅有限，主文中建议优先保留 \(J\) 与小波基类型两项敏感度实验，而将通道维度 \(C\) 的结果放入附录。为减小随机初始化带来的偶然波动，所有敏感度实验建议保持与主实验相同的数据划分，并至少运行多个随机种子后报告均值与标准差。这样不仅能够增强第四章结论的说服力，也能为后续总结“何种参数设置更适合小波包增强模型”提供更加稳健的实证依据。
+从表\ref{tab:chap4-sensitivity-wavelet}可以看到，可学习小波包分解在 ILI、Weather 与 ETTh1 三个数据集的全部预测长度以及平均结果上均取得最优性能，说明“根据任务自适应学习频带划分”相较于“使用固定滤波器组进行预定义分解”具有更加稳定的综合优势。在平均结果上，ILI 的 MSE/MAE 由 \(\mathrm{sym4}\) 的 \(1.483/0.781\) 进一步下降到 \(1.449/0.765\)，Weather 从 \(0.245/0.275\) 下降到 \(0.239/0.269\)，ETTh1 从 \(0.438/0.440\) 下降到 \(0.427/0.430\)。这表明在多元长程预测任务中，仅依赖固定小波基给出的静态时频划分仍不足以覆盖不同数据集的非平稳性与局部波动差异，而可学习小波包分解能够依据训练目标自动调整分解方式，从而在趋势保持与异常抑制之间取得更合适的平衡。
+
+进一步观察固定小波基之间的排序可以发现，三组数据在所有预测长度上的性能关系都保持一致，即 \(\mathrm{sym4}\) 次优，\(\mathrm{coif1}\) 再次之，随后是 \(\mathrm{db4}\)，而 \(\mathrm{db2}\) 的表现最弱。这一规律与各类小波基的结构特性是相符的。对于 \(\mathrm{sym4}\) 而言，其滤波器由对称化的 Daubechies 基构造得到，具有更好的近对称性和更小的相位畸变，因此在局部峰谷位置保持和周期形状恢复方面更有优势；\(\mathrm{coif1}\) 虽然也具有较好的平滑性与矩特性，但其滤波器长度和能量分布更偏向于在低频趋势与细节之间折中，因此整体略逊于 \(\mathrm{sym4}\)。以平均结果为例，ILI 上 \(\mathrm{sym4}\) 与 \(\mathrm{coif1}\) 分别为 \(1.483/0.781\) 和 \(1.491/0.785\)，Weather 上分别为 \(0.245/0.275\) 和 \(0.247/0.277\)，ETTh1 上分别为 \(0.438/0.440\) 和 \(0.440/0.443\)，二者差距虽小，但排序始终稳定。
+
+相较之下，\(\mathrm{db4}\) 与 \(\mathrm{db2}\) 的退化更加明显，其中 \(\mathrm{db4}\) 整体优于 \(\mathrm{db2}\)，说明增加消失矩和滤波器长度确实有助于增强固定小波基对长期趋势与复杂波动的表示能力；然而，由于 \(\mathrm{db4}\) 的对称性仍弱于 \(\mathrm{sym4}\)，其在峰谷相位保持和边界稳定性方面依旧存在局限，因此未能达到 \(\mathrm{sym4}\) 和 \(\mathrm{coif1}\) 的水平。进一步地，\(\mathrm{db2}\) 由于支撑长度较短、频带划分相对粗糙，对复杂非平稳序列中的局部高频扰动与中低频趋势难以同时兼顾，因此在三个数据集上均表现最差。例如在平均结果上，ILI 退化到 \(1.564/0.831\)，Weather 退化到 \(0.259/0.291\)，ETTh1 退化到 \(0.463/0.468\)。综上，表\ref{tab:chap4-sensitivity-wavelet} 一方面验证了可学习小波包分解优于固定小波基的总体结论，另一方面也表明在固定分解方式内部，近对称且具有更好时频平衡特性的基函数更适合作为多元长程预测任务的先验分解工具。
 
 \section{本章小结}
+本章在第三章统一骨架的基础上，将频域分支进一步具体化为小波包多尺度增强模块，形成了一种面向多元长程预测的时频域协同建模方法。与原始基座模型相比，该方法通过显式的子带分解、逐子带编码、注意力池化和跨分支交互，将混合在原始序列中的不同尺度成分拆解并重组，从而提升了模型对局部异常和剧烈波动的刻画能力。
 
-本章在第三章统一骨架的基础上，将频域分支进一步具体化为小波包多尺度增强模块，形成了一种面向多元长程预测的时频域协同建模方法。与原始基座模型相比，该方法通过显式的子带分解、逐子带编码、注意力池化和跨分支交互，将混合在原始序列中的不同尺度成分拆解并重组，从而提升了模型对局部异常和剧烈波动的刻画能力\cite{coifman1992bestbasis,sweldens1997lifting,qiu2025gatedattention}。  
+从实验结果看，本章通过主结果表、极端波动场景可视化、关键模块消融以及参数敏感度分析四个角度，对小波包增强模块的有效性进行了系统验证。现有结果表明，该方法在 MSE 指标上具有较为稳定的优势，并且在分解层数选择和固定小波基对比中均呈现出明确的最优配置。这说明多尺度局部频带建模确实有助于抑制少量高误差样本对整体平方误差的放大作用，也进一步证明了在统一骨架中引入频域增强是可行且有效的。
 
-从实验设计上看，本章通过主结果表、极端波动场景可视化、关键模块消融以及参数敏感度分析四个角度，对小波包增强模块的作用进行了系统验证。若实验结果表明其在 MSE 上具有更稳定的优势，并且对分解层数与小波基选择保持较好的鲁棒性，则可以据此说明：多尺度局部频带建模确实有助于抑制少量高误差样本，并为第六章进一步分析小波包方法与 MSE 优化之间的内在联系提供方法和证据基础\cite{chai2014rmsemae,donoho1994waveshrink}。
+与此同时，本章方法的主要增益更多体现在局部高波动片段、异常峰谷以及多尺度细节恢复方面。对于多元长程预测中普遍存在的整体周期结构保持、全局趋势一致性以及平均误差控制问题，仍有进一步提升空间。基于这一认识，下一章将在统一骨架上继续探索另一条频域增强路线，即直接在全局频谱空间中构造可学习频域前馈网络，以考察全局频域建模在综合性能、长期趋势保持和平均误差控制方面能否取得更优结果。

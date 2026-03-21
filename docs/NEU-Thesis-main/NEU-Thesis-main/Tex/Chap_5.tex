@@ -1,20 +1,4 @@
-\chapter{融合频域前馈网络的全局频域增强方法}
-
-本章在第三章统一骨架的基础上，提出了一种基于频域前馈网络的全局频域增强方法，以弥补局部多尺度分解方法在整体平均偏差优化方面的不足。与第四章侧重局部频带刻画的方案不同，本章首先将时间序列映射到复数频谱空间，在全局频域中利用可学习的复数线性变换显式建模不同频率成分与变量通道之间的交互关系\cite{cooley1965algorithm,yi2023frets}。其次，本文在频域映射后引入稀疏化机制，以抑制弱噪声频点并突出主要周期结构，从而提高频域表示的平滑性与鲁棒性\cite{donoho1994waveshrink}。最后，本章设计了结合预测步长先验的门控融合机制，使全局频域特征能够按照任务需求自适应注入时域表示，为后续分析其在 MAE 指标和长期趋势平滑度方面的优势奠定了方法基础\cite{qiu2025gatedattention}。  
-
-\section{问题分析与研究动机}
-
-第四章的小波包方法强调局部时频结构和多尺度分解，更适合处理局部尖峰与突变带来的大误差问题。然而，在多元长程预测任务中，除局部异常外还广泛存在较强的全局周期性和整体趋势模式\cite{lim2021deep,liu2021spatiotemporalcn,mao2023dltsfcn}。若模型主要依赖局部频带分析，虽然能够有效降低少数异常点导致的平方误差，但对整体曲线的平滑性和平均偏差控制未必最优，因此在 MAE 指标上仍然存在进一步提升空间\cite{hyndman2006accuracy,chai2014rmsemae}。  
-
-基于这一观察，本章转而关注另一类频域建模思想，即直接在全局频谱空间中学习可调节的变换。傅里叶变换能够将输入序列映射到全局频域，使不同周期成分在谱空间中得到更加明确的表达\cite{cooley1965algorithm}；若在此基础上进一步引入可学习的复数域线性变换与稀疏化机制，模型便可以根据数据分布自适应调整不同频率成分的强弱，并过滤对预测贡献较小的噪声频点\cite{yi2023frets}。这样的建模方式更倾向于从整体上优化预测曲线的形状和平滑度，从而有望在 MAE 指标上取得更明显的收益。  
-
-因此，本章在统一框架下将频域分支替换为可学习的频域前馈网络 FreTS\cite{yi2023frets}，并重点围绕三个问题展开：一是如何在复数频谱空间中构造稳定有效的可学习变换；二是如何将稀疏频率选择与时域分支、语义分支协同融合；三是该方法是否能够在 MAE 和长期趋势预测平滑性方面相较于其他方法体现出更稳定的优势。
-
-\section{模型架构设计}
-
-\subsection{频域前馈网络结构设计}
-
-本章方法以归一化后的输入序列 \(\mathbf{X}'\in\mathbb{R}^{B\times N\times L}\) 为起点，其中 \(B\)、\(N\) 和 \(L\) 分别表示批量大小、变量个数与历史窗口长度。与第四章在局部频带层面进行递归分解不同，本章直接在全局频谱空间中构造可学习频域前馈网络（FreTS），以显式建模长期周期结构与整体趋势信息\cite{yi2023frets}。为便于后续统一表示，先将输入重排为
+\chapter{融合频域前馈网络的全局频域增强方法} 本章在第三章统一骨架的基础上，提出了一种基于频域前馈网络的全局频域增强方法，以进一步提升模型对整体周期结构与全局趋势模式的刻画能力。与第四章侧重局部频带刻画的方案不同，本章首先将时间序列映射到复数频谱空间，在全局频域中利用可学习的复数线性变换显式建模不同频率成分与变量通道之间的交互关系。其次，本文在频域映射后引入稀疏化机制，以抑制弱噪声频点并突出主要周期结构，从而提高频域表示的平滑性与鲁棒性。最后，本章设计了结合预测步长先验的门控融合机制，使全局频域特征能够按照任务需求自适应注入时域表示，为后续分析其在综合预测性能、平均误差控制和长期趋势保持方面的优势奠定了方法基础。 \section{问题分析与研究动机} 第四章的小波包方法强调局部时频结构和多尺度分解，更适合处理局部尖峰与突变带来的大误差问题。然而，在多元长程预测任务中，除局部异常外还广泛存在较强的全局周期性和整体趋势模式。若模型主要依赖局部频带分析，虽然能够有效降低少数异常点导致的平方误差，但对整体曲线的平滑性、长期周期一致性以及平均误差控制仍可能存在提升空间。 基于这一观察，本章转而关注另一类频域建模思想，即直接在全局频谱空间中学习可调节的变换。傅里叶变换能够将输入序列映射到全局频域，使不同周期成分在谱空间中得到更加明确的表达；若在此基础上进一步引入可学习的复数域线性变换与稀疏化机制，模型便可以根据数据分布自适应调整不同频率成分的强弱，并过滤对预测贡献较小的噪声频点。这样的建模方式更倾向于从整体上优化预测曲线的形状和平滑度，从而有望在综合性能、平均误差与长期趋势保持方面取得更明显的收益。 因此，本章在统一框架下将频域分支替换为可学习的频域前馈网络 FreTS，并重点围绕三个问题展开：一是如何在复数频谱空间中构造稳定有效的可学习变换；二是如何将稀疏频率选择与时域分支、语义分支协同融合；三是该方法是否能够在综合预测性能、平均误差和长期趋势预测平滑性方面相较于其他方法体现出更稳定的优势。 \section{模型架构设计} \subsection{频域前馈网络结构设计} 本章方法以归一化后的输入序列 \(\mathbf{X}'\in\mathbb{R}^{B\times N\times L}\) 为起点，其中 \(B\)、\(N\) 和 \(L\) 分别表示批量大小、变量个数与历史窗口长度。与第四章在局部频带层面进行递归分解不同，本章直接在全局频谱空间中构造可学习频域前馈网络（FreTS），以显式建模长期周期结构与整体趋势信息。为便于后续统一表示，先将输入重排为
 \begin{equation}
 \mathbf{X}_{\mathrm{perm}}=\operatorname{Permute}(\mathbf{X}')\in\mathbb{R}^{B\times N\times L}
 \label{eq:chap5-input-permute}
@@ -33,9 +17,7 @@
 \mathbf{H}^{(0)}\in\mathbb{R}^{BN\times L\times C}.
 \label{eq:chap5-input-proj-shape}
 \end{equation}
-式（\ref{eq:chap5-input-proj}）对应代码中的 \texttt{fre\_projection}，其作用是将单变量时序提升到适合频域建模的通道空间。  
-
-在此基础上，FreTS 分支沿时间维执行实数快速傅里叶变换（RFFT）\cite{cooley1965algorithm}，得到复数谱表示
+式（\ref{eq:chap5-input-proj}）对应代码中的 \texttt{fre\_projection}，其作用是将单变量时序提升到适合频域建模的通道空间。 在此基础上，FreTS 分支沿时间维执行实数快速傅里叶变换（RFFT），得到复数谱表示
 \begin{equation}
 \widehat{\mathbf{H}}=\mathcal{F}_{\mathrm{rfft}}\!\left(\mathbf{H}^{(0)}\right)\in\mathbb{C}^{BN\times L_f\times C}
 \label{eq:chap5-rfft}
@@ -50,11 +32,7 @@ L_f=\left\lfloor\frac{L}{2}\right\rfloor+1.
 \widehat{h}_{b,\ell,c}=h^{(r)}_{b,\ell,c}+j\,h^{(i)}_{b,\ell,c}
 \label{eq:chap5-complex-entry}
 \end{equation}
-其中 \(h^{(r)}_{b,\ell,c}\) 与 \(h^{(i)}_{b,\ell,c}\) 分别表示复谱的实部与虚部。这样，原始时域序列中的趋势项、周期项以及噪声成分便能够以全局频率坐标的方式重新组织，为后续的复数域可学习变换提供基础。整体而言，本章并非将傅里叶变换作为固定预处理步骤，而是将“时域到频域的映射”纳入可训练网络，使模型能够直接在谱空间中调整主导频率结构\cite{yi2023frets}。
-
-\subsection{复数域特征提取与门控权重融合机制}
-
-在得到复数谱后，FreTS 模块对每个频率位置上的通道向量执行可学习复数线性变换\cite{yi2023frets}。设第 \(\ell\) 个频率位置上的输入复向量为
+其中 \(h^{(r)}_{b,\ell,c}\) 与 \(h^{(i)}_{b,\ell,c}\) 分别表示复谱的实部与虚部。这样，原始时域序列中的趋势项、周期项以及噪声成分便能够以全局频率坐标的方式重新组织，为后续的复数域可学习变换提供基础。整体而言，本章并非将傅里叶变换作为固定预处理步骤，而是将“时域到频域的映射”纳入可训练网络，使模型能够直接在谱空间中调整主导频率结构。 \subsection{复数域频谱建模与稀疏化机制} 在得到复数谱后，FreTS 模块对每个频率位置上的通道向量执行可学习复数线性变换。设第 \(\ell\) 个频率位置上的输入复向量为
 \begin{equation}
 \widehat{\mathbf{x}}_\ell=\mathbf{x}_{r,\ell}+j\mathbf{x}_{i,\ell}\in\mathbb{C}^{C}
 \label{eq:chap5-complex-vector}
@@ -73,9 +51,7 @@ L_f=\left\lfloor\frac{L}{2}\right\rfloor+1.
 \mathbf{y}^{(i)}_\ell=\mathbf{R}\mathbf{x}_{i,\ell}+\mathbf{I}\mathbf{x}_{r,\ell}+\mathbf{b}_i.
 \label{eq:chap5-complex-expand}
 \end{equation}
-这一形式与代码中对实部和虚部分别使用参数 \texttt{r}、\texttt{i}、\texttt{rb} 和 \texttt{ib} 的实现是一致。由于 \(\mathbf{R}\) 与 \(\mathbf{I}\) 会同时作用于实部和虚部，该变换不仅能够调整不同频率成分的幅值强弱，也能够通过实虚部耦合间接改变相位关系，因此更适合刻画长期周期模式之间的耦合结构。  
-
-为增强非线性表达能力，模型对式（\ref{eq:chap5-complex-real}）和式（\ref{eq:chap5-complex-expand}）的结果分别施加 ReLU 激活：
+这一形式与代码中对实部和虚部分别使用参数 \texttt{r}、\texttt{i}、\texttt{rb} 和 \texttt{ib} 的实现是一致。由于 \(\mathbf{R}\) 与 \(\mathbf{I}\) 会同时作用于实部和虚部，该变换不仅能够调整不同频率成分的幅值强弱，也能够通过实虚部耦合间接改变相位关系，因此更适合刻画长期周期模式之间的耦合结构。 为增强非线性表达能力，模型对式（\ref{eq:chap5-complex-real}）和式（\ref{eq:chap5-complex-expand}）的结果分别施加 ReLU 激活：
 \begin{equation}
 \widetilde{\mathbf{y}}^{(r)}_\ell=\operatorname{ReLU}\!\left(\mathbf{y}^{(r)}_\ell\right)
 \label{eq:chap5-complex-relu-real}
@@ -84,12 +60,12 @@ L_f=\left\lfloor\frac{L}{2}\right\rfloor+1.
 \widetilde{\mathbf{y}}^{(i)}_\ell=\operatorname{ReLU}\!\left(\mathbf{y}^{(i)}_\ell\right).
 \label{eq:chap5-complex-relu-imag}
 \end{equation}
-进一步地，为抑制弱噪声频率成分并突出主要周期结构，本章在复数谱上引入 SoftShrink 稀疏化算子\cite{donoho1994waveshrink}。对任意实数 \(z\)，其定义为
+进一步地，为抑制弱噪声频率成分并突出主要周期结构，本章在复数谱上引入软阈值稀疏化算子。对任意实数 \(z\)，其定义为
 \begin{equation}
 \mathcal{S}_{\tau}(z)=\mathrm{sign}(z)\max(|z|-\tau,0)
 \label{eq:chap5-softshrink}
 \end{equation}
-其中 \(\tau>0\) 表示稀疏阈值。在复数谱场景中，SoftShrink 分别作用于实部和虚部，得到
+其中 \(\tau>0\) 表示稀疏阈值。在复数谱场景中，软阈值稀疏化算子分别作用于实部和虚部，得到
 \begin{equation}
 \bar{\mathbf{y}}^{(r)}_\ell=\mathcal{S}_{\tau}\!\left(\widetilde{\mathbf{y}}^{(r)}_\ell\right)
 \label{eq:chap5-softshrink-real}
@@ -108,26 +84,20 @@ L_f=\left\lfloor\frac{L}{2}\right\rfloor+1.
 \bar{\widehat{\mathbf{H}}}\in\mathbb{C}^{BN\times L_f\times C}.
 \label{eq:chap5-complex-spectrum}
 \end{equation}
-阈值参数 \(\tau\) 控制了频谱保留的稀疏程度，而权重初始化尺度决定了复数变换在训练初期的稳定性。二者共同作用，使 FreTS 分支在保持可学习性的同时，避免频谱变换过于剧烈而破坏原始周期结构。  
-
-在完成复数谱重构后，模型利用逆实数快速傅里叶变换将频域表示重新映射回时域：
+阈值参数 \(\tau\) 控制了频谱保留的稀疏程度，而权重初始化尺度决定了复数变换在训练初期的稳定性。二者共同作用，使 FreTS 分支在保持可学习性的同时，避免频谱变换过于剧烈而破坏原始周期结构。 在完成复数谱重构后，模型利用逆实数快速傅里叶变换将频域表示重新映射回时域：
 \begin{equation}
 \mathbf{H}^{\mathrm{fre}}_{\mathrm{seq}}
 =\mathcal{F}_{\mathrm{irfft}}^{-1}\!\left(\bar{\widehat{\mathbf{H}}};L\right)
 \in\mathbb{R}^{BN\times L\times C}
 \label{eq:chap5-irfft}
 \end{equation}
-并通过 Dropout 得到最终的频域增强时序表示\cite{srivastava2014dropout}
+并通过 Dropout 得到最终的频域增强时序表示
 \begin{equation}
 \widetilde{\mathbf{H}}^{\mathrm{fre}}_{\mathrm{seq}}
 =\operatorname{Dropout}\!\left(\mathbf{H}^{\mathrm{fre}}_{\mathrm{seq}}\right).
 \label{eq:chap5-fre-dropout}
 \end{equation}
-这一步骤意味着 FreTS 不是简单在频域中做滤波，而是通过“频谱映射 - 复数重构 - 稀疏选择 - 回到时域”的完整链路，将全局频域结构重新注入到时域表示中。
-
-\subsection{频域-时域特征交互设计}
-
-FreTS 分支经过逆傅里叶变换后重新回到时域，其输出仍然保留与原序列一致的时间长度，因此可以被视为一种经过全局频谱重构后的增强时序表示。为将该序列压缩为变量级向量，模型引入注意力池化模块。设第 \(b\) 个变量对应的时序特征为 \(\widetilde{\mathbf{H}}^{\mathrm{fre}}_{\mathrm{seq},b}\in\mathbb{R}^{L\times C}\)，则注意力打分可写为
+这一步骤意味着 FreTS 不是简单在频域中做滤波，而是通过“频谱映射 - 复数重构 - 稀疏选择 - 回到时域”的完整链路，将全局频域结构重新注入到时域表示中。 \subsection{时频特征交互与跨模态对齐设计} FreTS 分支经过逆傅里叶变换后重新回到时域，其输出仍然保留与原序列一致的时间长度，因此可以被视为一种经过全局频谱重构后的增强时序表示。为将该序列压缩为变量级向量，模型引入注意力池化模块。设第 \(b\) 个变量对应的时序特征为 \(\widetilde{\mathbf{H}}^{\mathrm{fre}}_{\mathrm{seq},b}\in\mathbb{R}^{L\times C}\)，则注意力打分可写为
 \begin{equation}
 \mathbf{r}^{\mathrm{fre}}_b=\mathbf{W}_2^{\mathrm{pool}}\
 \phi\!\left(
@@ -153,9 +123,7 @@ FreTS 分支经过逆傅里叶变换后重新回到时域，其输出仍然保�
 \mathbf{H}^{\mathrm{fre}}\in\mathbb{R}^{B\times N\times C}.
 \label{eq:chap5-pool-output}
 \end{equation}
-随后，模型再利用一层门控 Transformer 编码器对 \(\mathbf{H}^{\mathrm{fre}}\) 进行结构强化，从而获得更稳定的全局频域表示\cite{vaswani2017attention,qiu2025gatedattention}。与第四章从多个子带获得局部频带信息不同，这里得到的是更偏向全局周期和整体趋势的频域表示。  
-
-与 FreTS 分支并行，统一骨架中的时域主干仍然保留。对归一化输入 \(\mathbf{X}'\) 先沿长度维投影到通道空间，得到
+随后，模型再利用一层门控 Transformer 编码器对 \(\mathbf{H}^{\mathrm{fre}}\) 进行结构强化，从而获得更稳定的全局频域表示。与第四章从多个子带获得局部频带信息不同，这里得到的是更偏向全局周期和整体趋势的频域表示。 与 FreTS 分支并行，统一骨架中的时域主干仍然保留。对归一化输入 \(\mathbf{X}'\) 先沿长度维投影到通道空间，得到
 \begin{equation}
 \mathbf{H}^{\mathrm{time}}_0=\mathbf{X}_{\mathrm{perm}}\mathbf{W}_{\mathrm{time}}+\mathbf{1}_{N}\mathbf{b}_{\mathrm{time}}^\top
 \label{eq:chap5-time-proj}
@@ -190,15 +158,13 @@ h^{\mathrm{horizon}}_{b,n,1}
 \mathbf{H}^{\text{tf}}=\mathbf{H}^{\text{time}}+\mathbf{G}^{\text{fusion}}\odot \mathbf{H}^{\text{fre}}.
 \label{eq:chap5-fusion}
 \end{equation}
-该设计使模型能够针对不同预测跨度动态调节频域分支的影响强度。对于较长预测步长，模型通常更依赖全局周期信息；对于较短预测步长，时域局部动态可能占主导。步长感知门控正是在这一意义上实现了频域与时域信息的任务相关融合。  
-
-在完成时频融合后，本章方法与第三章统一骨架保持一致：冻结大语言模型生成的语义嵌入先经 \texttt{prompt\_encoder} 适配，再与时频融合表示在多头 CMA 中进行跨模态对齐\cite{jin2024timellm,jiang2024empowering,zhang2025llmpowercn}。若语义表示记为 \(\mathbf{H}^{\mathrm{sem}}\)，则跨模态增强结果可写为
+该设计使模型能够针对不同预测跨度动态调节频域分支的影响强度。对于较长预测步长，模型通常更依赖全局周期信息；对于较短预测步长，时域局部动态可能占主导。步长感知门控正是在这一意义上实现了频域与时域信息的任务相关融合。 在完成时频融合后，本章方法与第三章统一骨架保持一致：冻结大语言模型生成的语义嵌入先经提示编码器适配，再与时频融合表示在多头跨模态对齐模块中进行跨模态对齐。若语义表示记为 \(\mathbf{H}^{\mathrm{sem}}\)，则跨模态增强结果可写为
 \begin{equation}
 \mathbf{H}^{\mathrm{cma}}
 =\mathrm{CMA}\!\left(\mathbf{H}^{\mathrm{tf}},\mathbf{H}^{\mathrm{sem}},\mathbf{H}^{\mathrm{sem}}\right).
 \label{eq:chap5-cma}
 \end{equation}
-在多头 CMA 输出之后，模型还引入通道级残差插值系数 \(\boldsymbol{\alpha}\in(0,1)^C\)，将跨模态增强结果与原时频表示进行加权融合：
+在多头跨模态对齐输出之后，模型还引入通道级残差插值系数 \(\boldsymbol{\alpha}\in(0,1)^C\)，将跨模态增强结果与原时频表示进行加权融合：
 \begin{equation}
 \mathbf{H}^{\mathrm{res}}
 =\boldsymbol{\alpha}\odot \mathbf{H}^{\mathrm{cma}}
@@ -208,28 +174,85 @@ h^{\mathrm{horizon}}_{b,n,1}
 最终，\(\mathbf{H}^{\mathrm{res}}\) 输入解码器并经线性投影得到预测结果
 \begin{equation}
 \widehat{\mathbf{Y}}
-=\mathrm{Proj}\!\left(\mathrm{Decoder}\!\left(\mathbf{H}^{\mathrm{res}}\right)\right)\in\mathbb{R}^{B\times N\times H}
+=\mathrm{Proj}\!\left(\mathrm{Decoder}\!\left(\mathbf{H}^{\mathrm{res}}\right)\right)\in\mathbb{R}^{B\times H\times N}
 \label{eq:chap5-output}
 \end{equation}
-其中 \(H\) 表示预测步长。在实验评价上，本章将继续汇报 MSE 与 MAE 两项指标\cite{hyndman2006accuracy,chai2014rmsemae}，但重点关注 MAE 以及长期预测曲线的平滑性，以突出全局频域建模的优势。
-
-\section{实验设置与结果分析}
-
-\subsection{实验设置与对比基线}
-
-本章实验设置与第四章保持一致，包括数据集划分、输入输出窗口长度、RevIN 预处理、评价指标和训练流程\cite{kim2022revin,hyndman2006accuracy,chai2014rmsemae}，以保证两章结果具备可比性。模型结构上，仅将统一框架中的频域分支替换为 FreTS 频域前馈网络，并采用默认的稀疏阈值、初始化尺度和通道配置。时域分支、语义分支、CMA 与解码器均保持不变，从而使实验结论能够更集中地反映全局频域建模本身的作用。  
-
-为凸显本章方法的特点，本文选取了原始基座模型、无频域增强的统一框架以及若干具有代表性的长程预测基线作为对比对象。结果表中同时给出 MSE 与 MAE 两项指标，但分析时以 MAE 为主，因为本章的核心目标在于验证可学习的全局频谱建模是否能够更有效地降低平均绝对误差并改善长期预测稳定性。训练细节如优化器、学习率、batch size 与早停策略均与前文保持一致。
-
-由于本章采用的主要对比模型与第四章保持一致，其代表性与技术路线划分已在第四章“实验设置与对比基线”部分说明，此处不再重复列表。其中，TimeCMA、TimeLLM 与 UniTime 分别代表近年来将大语言模型或统一建模引入时间序列预测的研究路线\cite{liu2025timecma,jin2024timellm,liu2024unitime}；iTransformer、TimesNet、PatchTST 与 DLinear 则分别对应变量反转注意力、二维时序建模、patch 化 Transformer 和纯线性建模等不同范式\cite{liu2024itransformer,wu2023timesnet,nie2023patchtst,zeng2023are}。这些方法覆盖了大模型迁移、统一建模、纯线性建模以及 Transformer 结构改进等不同技术路线，能够较全面地反映当前长程时间序列预测任务中的主流方法谱系，也与相关综述对模型类别的归纳基本一致\cite{wen2023transformers,chen2025transformercn}。
-
-在明确对比对象之后，下面将从主结果表现、长期趋势形态以及关键模块作用三个角度，对融合频域前馈网络方法的有效性与适用场景进行分析。其中，主结果部分重点关注 MAE 及长预测步长下的整体误差表现，以突出全局频域建模在长期趋势预测中的优势。
-
-\subsection{MAE 指标表现及稳健性分析}
-
-表\ref{tab:chap5-main-results-a}和表\ref{tab:chap5-main-results-b}给出了融合频域前馈网络方法的预测性能对比。考虑到完整大表的列数过多会显著压缩数值字号，本文采用“共享本文方法列”的方式进行纵向拆分：表\ref{tab:chap5-main-results-a}展示 Ours 与 T3time、TimeCMA、TimeLLM、TimesNet 的对比，表\ref{tab:chap5-main-results-b}展示 Ours 与 UniTime、DLinear、iTransformer、PatchTST 的对比。这样的组织方式既能保证两张表都以本文方法为参照，也能覆盖原始主结果表中的主要对比模型，并更便于观察 FreTS 版本在 MAE 及综合预测性能上的优势。
-
-\begin{table}[!htbp]
+其中 \(H\) 表示预测步长。在实验评价上，本章将继续汇报 MSE 与 MAE 两项指标，但重点关注 MAE 以及长期预测曲线的平滑性，以突出全局频域建模的优势。 \subsection{损失函数设计} 与第四章在训练目标中额外加入阈值正则项不同，第五章模型的损失函数更加直接，其核心目标是通过对预测误差本身进行鲁棒优化来提升整体平均偏差控制能力。设模型输出与真实目标分别为
+\begin{equation}
+\widehat{\mathbf{Y}},\mathbf{Y}\in\mathbb{R}^{B\times H\times N}
+\label{eq:chap5-loss-target}
+\end{equation}
+其中 \(B\)、\(H\) 和 \(N\) 分别表示批量大小、预测长度和变量个数。若记逐元素预测误差为
+\begin{equation}
+e_{b,h,n}=\widehat{y}_{b,h,n}-y_{b,h,n}
+\label{eq:chap5-loss-error}
+\end{equation}
+则脚本中提供了两种可选训练目标：均方误差和 SmoothL1 损失。其中，均方误差定义为
+\begin{equation}
+\mathcal{L}_{\mathrm{mse}}
+=\frac{1}{BHN}
+\sum_{b=1}^{B}\sum_{h=1}^{H}\sum_{n=1}^{N}
+e_{b,h,n}^{2}.
+\label{eq:chap5-loss-mse}
+\end{equation}
+该损失对大误差样本更为敏感，适合强调极端偏差的压制；但从本章实验目标来看，模型更关注整体平均误差和长期趋势稳定性，因此默认训练脚本采用了带阈值参数的 SmoothL1 损失，即
+\begin{equation}
+\mathcal{L}_{\mathrm{s1}}
+=\frac{1}{BHN}
+\sum_{b=1}^{B}\sum_{h=1}^{H}\sum_{n=1}^{N}
+\ell_{\beta}\!\left(e_{b,h,n}\right)
+\label{eq:chap5-loss-s1}
+\end{equation}
+其中逐元素损失函数 \(\ell_{\beta}(\cdot)\) 定义为
+\begin{equation}
+\ell_{\beta}(e)=
+\begin{cases}
+\dfrac{e^{2}}{2\beta}, & |e|<\beta \\
+|e|-\dfrac{\beta}{2}, & |e|\geq \beta
+\end{cases}
+\label{eq:chap5-loss-piecewise}
+\end{equation}
+在默认配置下取
+\begin{equation}
+\beta=0.2.
+\label{eq:chap5-loss-beta}
+\end{equation}
+式（\ref{eq:chap5-loss-piecewise}）表明，当误差较小时，SmoothL1 退化为局部二次函数，从而保持足够平滑的梯度；当误差较大时，其增长速度转为线性，可减弱个别异常点对整体梯度的过度主导。这一性质与第五章方法的目标较为一致，即在保持长期趋势重构能力的同时，更稳定地降低平均绝对偏差。 因此，第五章完整模型在默认训练脚本中的优化目标可直接写为
+\begin{equation}
+\mathcal{L}_{\mathrm{chap5}}=\mathcal{L}_{\mathrm{s1}}.
+\label{eq:chap5-loss-total}
+\end{equation}
+需要指出的是，虽然本章 FreTS 分支内部包含软阈值稀疏化操作，但这种稀疏约束是通过前向传播中的频域映射直接实现的，而非通过额外的辅助正则项显式加入到总损失函数中。换言之，第五章的“稀疏性”属于模型结构内部的表示约束，而不是像第四章那样通过附加损失项对参数进行显式惩罚。与此同时，若在实验中将损失函数类型设置为均方误差损失，则训练目标可切换为式（\ref{eq:chap5-loss-mse}）；但在默认配置以及本文主结果实验中，均采用式（\ref{eq:chap5-loss-total}）进行训练、验证和早停，从而使优化目标与 MAE 改善这一研究重点保持一致。 \section{实验设置与结果分析} \subsection{实验设置与对比基线} 本章实验环境与第四章保持一致，硬件平台和软件配置统一见表\ref{tab:chap4-exp-env}。在此基础上，数据集划分、输入输出窗口长度、RevIN 预处理以及训练流程亦均沿用第四章设置；评价指标继续采用 MSE 与 MAE，以保证两章结果具备可比性。模型结构上，仅将统一框架中的频域分支替换为频域前馈网络（FreTS），并采用默认的稀疏阈值、初始化尺度和通道配置；时域分支、语义分支、跨模态对齐模块与解码器均保持不变，从而使实验结论能够更集中地反映全局频域建模本身的作用。 为便于复现实验，表\ref{tab:chap5-hparams} 进一步给出了第五章主模型的关键超参数设置。其中，\(\tau=0.009\) 和 \(s=0.018\) 分别对应 FreTS 分支中的默认稀疏阈值与复数变换初始化尺度，也是后文参数敏感度分析所围绕的中心配置。除数据集规模、变量个数和预测长度外，其余训练参数在默认训练脚本中保持不变。 \begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{4.2pt}
+\renewcommand{\arraystretch}{1.02}
+\bicaption{第五章主模型超参数设置}{Hyperparameter settings of the Chapter 5 model}
+\label{tab:chap5-hparams}
+\begin{tabular}{c|c}
+\toprule
+\textbf{超参数} & \textbf{数值/方法} \\
+\midrule
+优化器 & Adam \\
+训练轮数 & 100 \\
+批大小 & 16 \\
+初始学习率 & \(1\times10^{-4}\) \\
+权重衰减 & \(1\times10^{-4}\) \\
+早停耐心值 & 10 \\
+学习率调整策略 & \texttt{type1} \\
+通道维度 \(C\) & 64 \\
+Dropout & 0.1 \\
+编码器层数 / 解码器层数 & 1 / 1 \\
+注意力头数 & 8 \\
+稀疏阈值 \(\tau\) & 0.009 \\
+初始化尺度 \(s\) & 0.018 \\
+融合方式 & \texttt{gate} \\
+损失函数 & 平滑 L1 损失（\(\beta=0.2\)） \\
+语义嵌入版本 & \texttt{Qwen3-0.6B} \\
+随机种子 & 2024 \\
+\bottomrule
+\end{tabular}
+\end{table} 为凸显本章方法的特点，本文选取了原始基座模型、无频域增强的统一框架以及若干具有代表性的长程预测基线作为对比对象。结果表中同时给出 MSE 与 MAE 两项指标，但分析时以 MAE 为主，因为本章的核心目标在于验证可学习的全局频谱建模是否能够更有效地降低平均绝对误差并改善长期预测稳定性。训练细节如优化器、学习率、batch size 与早停策略均与前文保持一致。 由于本章采用的主要对比模型与第四章保持一致，其代表性、发表信息与技术路线划分统一见第四章表\ref{tab:chap4-baselines}，此处不再重复列表。其中，TimeCMA 与 TimeLLM 代表近年来将大语言模型引入时间序列预测的研究路线；UniTime 则进一步强调跨领域统一建模；iTransformer 与 TimesNet 分别对应变量反转注意力和二维时序建模范式；PatchTST 与 DLinear 则分别代表 patch 化 Transformer 和纯线性建模路线。这些方法覆盖了大模型迁移、统一建模、纯线性建模以及 Transformer 结构改进等不同技术路线，能够较全面地反映当前长程时间序列预测任务中的主流方法谱系，也与相关综述对模型类别的归纳基本一致。 在明确对比对象之后，下面将从主结果表现、长期趋势形态以及关键模块作用三个角度，对融合频域前馈网络方法的有效性与适用场景进行分析。其中，主结果部分重点关注 MAE 及长预测步长下的整体误差表现，以突出全局频域建模在长期趋势预测中的优势。 \subsection{MAE 指标表现及误差特性分析} 表\ref{tab:chap5-main-results-a}和表\ref{tab:chap5-main-results-b}给出了融合频域前馈网络方法的预测性能对比。考虑到完整大表的列数过多会显著压缩数值字号，本文采用“共享本文方法列”的方式进行纵向拆分：表\ref{tab:chap5-main-results-a}展示 Ours 与 T3time、TimeCMA、TimeLLM、TimesNet 的对比，表\ref{tab:chap5-main-results-b}展示 Ours 与 UniTime、DLinear、iTransformer、PatchTST 的对比。这样的组织方式既能保证两张表都以本文方法为参照，也能覆盖原始主结果表中的主要对比模型，并更便于观察 FreTS 版本在 MAE 及综合预测性能上的优势。 \begin{table}[!htbp]
 \centering
 \small
 \setlength{\tabcolsep}{3.6pt}
@@ -247,49 +270,49 @@ h^{\mathrm{horizon}}_{b,n,1}
 & & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
 \midrule
 \multirow{5}{*}{ETTm1}
-& 96  & \textbf{\textcolor{red}{0.307}} & \textbf{\textcolor{red}{0.341}} & \textbf{0.308} & 0.354 & 0.312 & \textbf{0.351} & 0.359 & 0.381 & 0.338 & 0.375 \\
+& 96 & \textbf{\textcolor{red}{0.307}} & \textbf{\textcolor{red}{0.341}} & \textbf{0.308} & 0.354 & 0.312 & \textbf{0.351} & 0.359 & 0.381 & 0.338 & 0.375 \\
 & 192 & \textbf{0.361} & \textbf{\textcolor{red}{0.369}} & \textbf{\textcolor{red}{0.357}} & 0.381 & \textbf{0.361} & \textbf{0.378} & 0.383 & 0.393 & 0.374 & 0.387 \\
 & 336 & 0.396 & \textbf{\textcolor{red}{0.392}} & \textbf{\textcolor{red}{0.382}} & \textbf{0.400} & \textbf{0.392} & 0.401 & 0.416 & 0.414 & 0.410 & 0.411 \\
 & 720 & 0.464 & \textbf{\textcolor{red}{0.431}} & \textbf{\textcolor{red}{0.442}} & \textbf{0.437} & \textbf{0.453} & 0.438 & 0.483 & 0.449 & 0.478 & 0.450 \\
 & Avg & 0.382 & \textbf{\textcolor{red}{0.383}} & \textbf{\textcolor{red}{0.372}} & 0.393 & \textbf{0.380} & \textbf{0.392} & 0.410 & 0.409 & 0.400 & 0.406 \\
 \midrule
 \multirow{5}{*}{ETTm2}
-& 96  & \textbf{\textcolor{red}{0.166}} & \textbf{\textcolor{red}{0.247}} & \textbf{0.172} & \textbf{0.254} & 0.173 & 0.258 & 0.193 & 0.280 & 0.187 & 0.267 \\
+& 96 & \textbf{\textcolor{red}{0.166}} & \textbf{\textcolor{red}{0.247}} & \textbf{0.172} & \textbf{0.254} & 0.173 & 0.258 & 0.193 & 0.280 & 0.187 & 0.267 \\
 & 192 & \textbf{\textcolor{red}{0.234}} & \textbf{\textcolor{red}{0.291}} & \textbf{0.237} & \textbf{0.300} & 0.238 & 0.301 & 0.257 & 0.318 & 0.249 & 0.309 \\
 & 336 & \textbf{\textcolor{red}{0.293}} & \textbf{\textcolor{red}{0.329}} & 0.306 & \textbf{0.337} & \textbf{0.297} & 0.338 & 0.317 & 0.353 & 0.319 & 0.351 \\
 & 720 & \textbf{\textcolor{red}{0.392}} & \textbf{\textcolor{red}{0.388}} & 0.400 & 0.398 & \textbf{0.393} & \textbf{0.394} & 0.419 & 0.411 & 0.408 & 0.403 \\
 & Avg & \textbf{\textcolor{red}{0.271}} & \textbf{\textcolor{red}{0.314}} & 0.279 & \textbf{0.322} & \textbf{0.275} & 0.323 & 0.296 & 0.340 & 0.291 & 0.333 \\
 \midrule
 \multirow{5}{*}{ETTh1}
-& 96  & \textbf{\textcolor{red}{0.370}} & \textbf{\textcolor{red}{0.387}} & \textbf{0.371} & 0.397 & 0.373 & \textbf{0.391} & 0.398 & 0.410 & 0.384 & 0.402 \\
+& 96 & \textbf{\textcolor{red}{0.370}} & \textbf{\textcolor{red}{0.387}} & \textbf{0.371} & 0.397 & 0.373 & \textbf{0.391} & 0.398 & 0.410 & 0.384 & 0.402 \\
 & 192 & \textbf{0.418} & \textbf{\textcolor{red}{0.416}} & \textbf{\textcolor{red}{0.411}} & \textbf{0.421} & 0.427 & \textbf{0.421} & 0.451 & 0.440 & 0.434 & 0.429 \\
 & 336 & 0.463 & \textbf{\textcolor{red}{0.438}} & \textbf{\textcolor{red}{0.448}} & \textbf{0.441} & \textbf{0.458} & 0.448 & 0.473 & 0.451 & 0.491 & 0.469 \\
 & 720 & 0.453 & \textbf{\textcolor{red}{0.453}} & \textbf{\textcolor{red}{0.441}} & \textbf{0.460} & \textbf{0.449} & \textbf{0.460} & 0.469 & 0.470 & 0.521 & 0.500 \\
 & Avg & 0.426 & \textbf{\textcolor{red}{0.424}} & \textbf{\textcolor{red}{0.418}} & \textbf{0.430} & \textbf{0.423} & 0.431 & 0.448 & 0.443 & 0.458 & 0.450 \\
 \midrule
 \multirow{5}{*}{ETTh2}
-& 96  & \textbf{\textcolor{red}{0.277}} & \textbf{\textcolor{red}{0.328}} & \textbf{0.278} & 0.338 & 0.286 & \textbf{0.336} & 0.295 & 0.345 & 0.340 & 0.374 \\
+& 96 & \textbf{\textcolor{red}{0.277}} & \textbf{\textcolor{red}{0.328}} & \textbf{0.278} & 0.338 & 0.286 & \textbf{0.336} & 0.295 & 0.345 & 0.340 & 0.374 \\
 & 192 & \textbf{\textcolor{red}{0.351}} & \textbf{\textcolor{red}{0.378}} & \textbf{\textcolor{red}{0.351}} & 0.389 & \textbf{0.363} & \textbf{0.387} & 0.386 & 0.399 & 0.402 & 0.414 \\
 & 336 & \textbf{0.391} & \textbf{0.409} & \textbf{\textcolor{red}{0.358}} & \textbf{\textcolor{red}{0.398}} & 0.406 & 0.421 & 0.419 & 0.429 & 0.452 & 0.452 \\
 & 720 & \textbf{\textcolor{red}{0.402}} & \textbf{\textcolor{red}{0.426}} & \textbf{0.404} & \textbf{0.433} & 0.417 & 0.438 & 0.425 & 0.442 & 0.462 & 0.468 \\
 & Avg & \textbf{0.355} & \textbf{\textcolor{red}{0.385}} & \textbf{\textcolor{red}{0.348}} & \textbf{0.390} & 0.372 & 0.397 & 0.381 & 0.404 & 0.414 & 0.427 \\
 \midrule
 \multirow{5}{*}{Weather}
-& 96  & \textbf{\textcolor{red}{0.151}} & \textbf{\textcolor{red}{0.191}} & \textbf{0.162} & \textbf{0.210} & 0.167 & 0.211 & 0.198 & 0.235 & 0.172 & 0.220 \\
+& 96 & \textbf{\textcolor{red}{0.151}} & \textbf{\textcolor{red}{0.191}} & \textbf{0.162} & \textbf{0.210} & 0.167 & 0.211 & 0.198 & 0.235 & 0.172 & 0.220 \\
 & 192 & \textbf{\textcolor{red}{0.200}} & \textbf{\textcolor{red}{0.238}} & \textbf{0.211} & \textbf{0.253} & 0.212 & \textbf{0.253} & 0.240 & 0.269 & 0.219 & 0.261 \\
 & 336 & \textbf{\textcolor{red}{0.257}} & \textbf{\textcolor{red}{0.282}} & \textbf{0.267} & 0.293 & 0.270 & \textbf{0.292} & 0.295 & 0.308 & 0.280 & 0.306 \\
 & 720 & \textbf{\textcolor{red}{0.334}} & \textbf{\textcolor{red}{0.333}} & \textbf{0.335} & \textbf{0.346} & 0.350 & 0.348 & 0.368 & 0.353 & 0.365 & 0.359 \\
 & Avg & \textbf{\textcolor{red}{0.235}} & \textbf{\textcolor{red}{0.261}} & \textbf{0.244} & \textbf{0.275} & 0.250 & 0.276 & 0.275 & 0.291 & 0.259 & 0.287 \\
 \midrule
 \multirow{5}{*}{ILI}
-& 24  & \textbf{\textcolor{red}{1.422}} & \textbf{\textcolor{red}{0.751}} & \textbf{1.583} & \textbf{0.802} & 1.996 & 0.998 & 2.383 & 1.004 & 2.317 & 0.934 \\
-& 36  & \textbf{\textcolor{red}{1.292}} & \textbf{\textcolor{red}{0.693}} & \textbf{1.601} & \textbf{0.820} & 1.906 & 0.915 & 2.390 & 0.993 & 1.972 & 0.920 \\
-& 48  & \textbf{\textcolor{red}{1.284}} & \textbf{\textcolor{red}{0.733}} & \textbf{1.718} & \textbf{0.815} & 1.867 & 0.868 & 2.394 & 1.003 & 2.238 & 0.913 \\
-& 60  & \textbf{\textcolor{red}{1.685}} & \textbf{\textcolor{red}{0.797}} & \textbf{1.920} & \textbf{0.901} & \textbf{1.920} & 0.904 & 2.562 & 1.049 & 2.027 & 0.928 \\
+& 24 & \textbf{\textcolor{red}{1.422}} & \textbf{\textcolor{red}{0.751}} & \textbf{1.583} & \textbf{0.802} & 1.996 & 0.998 & 2.383 & 1.004 & 2.317 & 0.934 \\
+& 36 & \textbf{\textcolor{red}{1.292}} & \textbf{\textcolor{red}{0.693}} & \textbf{1.601} & \textbf{0.820} & 1.906 & 0.915 & 2.390 & 0.993 & 1.972 & 0.920 \\
+& 48 & \textbf{\textcolor{red}{1.284}} & \textbf{\textcolor{red}{0.733}} & \textbf{1.718} & \textbf{0.815} & 1.867 & 0.868 & 2.394 & 1.003 & 2.238 & 0.913 \\
+& 60 & \textbf{\textcolor{red}{1.685}} & \textbf{\textcolor{red}{0.797}} & \textbf{1.920} & \textbf{0.901} & \textbf{1.920} & 0.904 & 2.562 & 1.049 & 2.027 & 0.928 \\
 & Avg & \textbf{\textcolor{red}{1.421}} & \textbf{\textcolor{red}{0.744}} & \textbf{1.705} & \textbf{0.835} & 1.922 & 0.921 & 2.432 & 1.012 & 2.139 & 0.931 \\
 \midrule
 \multirow{5}{*}{Exchange}
-& 96  & \textbf{\textcolor{red}{0.081}} & \textbf{\textcolor{red}{0.199}} & \textbf{0.085} & \textbf{0.205} & 0.099 & 0.224 & 0.087 & 0.208 & 0.107 & 0.234 \\
+& 96 & \textbf{\textcolor{red}{0.081}} & \textbf{\textcolor{red}{0.199}} & \textbf{0.085} & \textbf{0.205} & 0.099 & 0.224 & 0.087 & 0.208 & 0.107 & 0.234 \\
 & 192 & \textbf{\textcolor{red}{0.165}} & \textbf{\textcolor{red}{0.290}} & \textbf{0.172} & \textbf{0.296} & 0.186 & 0.312 & 0.173 & 0.299 & 0.226 & 0.344 \\
 & 336 & \textbf{\textcolor{red}{0.300}} & \textbf{\textcolor{red}{0.398}} & \textbf{0.318} & \textbf{0.408} & 0.364 & 0.444 & 0.375 & 0.454 & 0.367 & 0.448 \\
 & 720 & \textbf{\textcolor{red}{0.725}} & \textbf{\textcolor{red}{0.638}} & \textbf{0.836} & \textbf{0.696} & 0.932 & 0.735 & 0.853 & 0.703 & 0.964 & 0.746 \\
@@ -298,9 +321,7 @@ h^{\mathrm{horizon}}_{b,n,1}
 \multicolumn{2}{c|}{\textbf{1st Count}} & \textbf{\textcolor{red}{25}} & \textbf{\textcolor{red}{34}} & \textbf{11} & \textbf{1} & 0 & 0 & 0 & 0 & 0 & 0 \\
 \bottomrule
 \end{tabular}
-\end{table}
-
-\begin{table}[!htbp]
+\end{table} \begin{table}[!htbp]
 \centering
 \small
 \setlength{\tabcolsep}{3.6pt}
@@ -318,49 +339,49 @@ h^{\mathrm{horizon}}_{b,n,1}
 & & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
 \midrule
 \multirow{5}{*}{ETTm1}
-& 96  & \textbf{\textcolor{red}{0.307}} & \textbf{\textcolor{red}{0.341}} & \textbf{0.322} & \textbf{0.363} & 0.345 & 0.372 & 0.334 & 0.368 & 0.344 & 0.373 \\
+& 96 & \textbf{\textcolor{red}{0.307}} & \textbf{\textcolor{red}{0.341}} & \textbf{0.322} & \textbf{0.363} & 0.345 & 0.372 & 0.334 & 0.368 & 0.344 & 0.373 \\
 & 192 & \textbf{\textcolor{red}{0.361}} & \textbf{\textcolor{red}{0.369}} & \textbf{0.366} & 0.387 & 0.380 & 0.389 & 0.377 & 0.391 & 0.367 & \textbf{0.386} \\
 & 336 & \textbf{0.396} & \textbf{\textcolor{red}{0.392}} & 0.398 & \textbf{0.407} & 0.413 & 0.413 & 0.426 & 0.420 & \textbf{\textcolor{red}{0.392}} & \textbf{0.407} \\
 & 720 & \textbf{0.464} & \textbf{\textcolor{red}{0.431}} & \textbf{\textcolor{red}{0.454}} & \textbf{0.440} & 0.474 & 0.453 & 0.491 & 0.459 & \textbf{0.464} & 0.442 \\
 & Avg & \textbf{\textcolor{red}{0.382}} & \textbf{\textcolor{red}{0.383}} & \textbf{0.385} & \textbf{0.399} & 0.403 & 0.407 & 0.407 & 0.410 & 0.392 & 0.402 \\
 \midrule
 \multirow{5}{*}{ETTm2}
-& 96  & \textbf{\textcolor{red}{0.166}} & \textbf{\textcolor{red}{0.247}} & 0.183 & 0.266 & 0.193 & 0.292 & 0.180 & 0.264 & \textbf{0.177} & \textbf{0.260} \\
+& 96 & \textbf{\textcolor{red}{0.166}} & \textbf{\textcolor{red}{0.247}} & 0.183 & 0.266 & 0.193 & 0.292 & 0.180 & 0.264 & \textbf{0.177} & \textbf{0.260} \\
 & 192 & \textbf{\textcolor{red}{0.234}} & \textbf{\textcolor{red}{0.291}} & 0.251 & 0.310 & 0.284 & 0.362 & 0.250 & 0.309 & \textbf{0.246} & \textbf{0.305} \\
 & 336 & \textbf{0.293} & \textbf{0.329} & \textbf{\textcolor{red}{0.183}} & \textbf{\textcolor{red}{0.266}} & 0.369 & 0.427 & 0.311 & 0.348 & 0.305 & 0.343 \\
 & 720 & \textbf{\textcolor{red}{0.392}} & \textbf{\textcolor{red}{0.388}} & 0.420 & 0.410 & 0.554 & 0.522 & 0.412 & 0.407 & \textbf{0.410} & \textbf{0.405} \\
 & Avg & \textbf{\textcolor{red}{0.271}} & \textbf{\textcolor{red}{0.314}} & 0.293 & 0.334 & 0.350 & 0.401 & 0.288 & 0.332 & \textbf{0.285} & \textbf{0.328} \\
 \midrule
 \multirow{5}{*}{ETTh1}
-& 96  & \textbf{\textcolor{red}{0.370}} & \textbf{\textcolor{red}{0.387}} & 0.397 & 0.418 & \textbf{0.386} & \textbf{0.400} & \textbf{0.386} & 0.405 & 0.404 & 0.413 \\
+& 96 & \textbf{\textcolor{red}{0.370}} & \textbf{\textcolor{red}{0.387}} & 0.397 & 0.418 & \textbf{0.386} & \textbf{0.400} & \textbf{0.386} & 0.405 & 0.404 & 0.413 \\
 & 192 & \textbf{\textcolor{red}{0.418}} & \textbf{\textcolor{red}{0.416}} & \textbf{0.434} & 0.439 & 0.437 & 0.432 & 0.441 & 0.436 & 0.454 & \textbf{0.430} \\
 & 336 & \textbf{\textcolor{red}{0.463}} & \textbf{\textcolor{red}{0.438}} & \textbf{0.468} & \textbf{0.457} & 0.481 & 0.459 & 0.487 & 0.458 & 0.497 & 0.462 \\
 & 720 & \textbf{\textcolor{red}{0.453}} & \textbf{\textcolor{red}{0.453}} & \textbf{0.469} & \textbf{0.477} & 0.519 & 0.516 & 0.503 & 0.491 & 0.496 & 0.481 \\
 & Avg & \textbf{\textcolor{red}{0.426}} & \textbf{\textcolor{red}{0.424}} & \textbf{0.442} & 0.448 & 0.456 & 0.452 & 0.454 & \textbf{0.447} & 0.463 & 0.449 \\
 \midrule
 \multirow{5}{*}{ETTh2}
-& 96  & \textbf{\textcolor{red}{0.277}} & \textbf{\textcolor{red}{0.328}} & \textbf{0.296} & \textbf{0.345} & 0.333 & 0.387 & 0.297 & 0.349 & 0.312 & 0.358 \\
+& 96 & \textbf{\textcolor{red}{0.277}} & \textbf{\textcolor{red}{0.328}} & \textbf{0.296} & \textbf{0.345} & 0.333 & 0.387 & 0.297 & 0.349 & 0.312 & 0.358 \\
 & 192 & \textbf{\textcolor{red}{0.351}} & \textbf{\textcolor{red}{0.378}} & \textbf{0.374} & \textbf{0.394} & 0.477 & 0.476 & 0.380 & 0.400 & 0.397 & 0.408 \\
 & 336 & \textbf{\textcolor{red}{0.391}} & \textbf{\textcolor{red}{0.409}} & \textbf{0.415} & \textbf{0.427} & 0.594 & 0.541 & 0.428 & 0.432 & 0.435 & 0.440 \\
 & 720 & \textbf{\textcolor{red}{0.402}} & \textbf{\textcolor{red}{0.426}} & \textbf{0.425} & \textbf{0.444} & 0.831 & 0.657 & 0.427 & 0.445 & 0.436 & 0.449 \\
 & Avg & \textbf{\textcolor{red}{0.355}} & \textbf{\textcolor{red}{0.385}} & \textbf{0.378} & \textbf{0.403} & 0.559 & 0.515 & 0.383 & 0.407 & 0.395 & 0.414 \\
 \midrule
 \multirow{5}{*}{Weather}
-& 96  & \textbf{\textcolor{red}{0.151}} & \textbf{\textcolor{red}{0.191}} & \textbf{0.171} & \textbf{0.214} & 0.196 & 0.255 & 0.174 & \textbf{0.214} & 0.177 & 0.218 \\
+& 96 & \textbf{\textcolor{red}{0.151}} & \textbf{\textcolor{red}{0.191}} & \textbf{0.171} & \textbf{0.214} & 0.196 & 0.255 & 0.174 & \textbf{0.214} & 0.177 & 0.218 \\
 & 192 & \textbf{\textcolor{red}{0.200}} & \textbf{\textcolor{red}{0.238}} & \textbf{0.217} & \textbf{0.254} & 0.237 & 0.296 & 0.221 & \textbf{0.254} & 0.222 & 0.259 \\
 & 336 & \textbf{\textcolor{red}{0.257}} & \textbf{\textcolor{red}{0.282}} & \textbf{0.274} & \textbf{0.293} & 0.283 & 0.335 & 0.278 & 0.296 & 0.277 & 0.297 \\
 & 720 & \textbf{\textcolor{red}{0.334}} & \textbf{\textcolor{red}{0.333}} & 0.351 & \textbf{0.343} & \textbf{0.345} & 0.381 & 0.358 & 0.349 & 0.352 & 0.347 \\
 & Avg & \textbf{\textcolor{red}{0.235}} & \textbf{\textcolor{red}{0.261}} & \textbf{0.253} & \textbf{0.276} & 0.265 & 0.317 & 0.258 & 0.278 & 0.257 & 0.280 \\
 \midrule
 \multirow{5}{*}{ILI}
-& 24  & \textbf{\textcolor{red}{1.422}} & \textbf{\textcolor{red}{0.751}} & 2.346 & \textbf{0.954} & 2.398 & 1.040 & 2.347 & 1.731 & \textbf{2.335} & 0.989 \\
-& 36  & \textbf{\textcolor{red}{1.292}} & \textbf{\textcolor{red}{0.693}} & \textbf{1.998} & \textbf{0.912} & 2.646 & 1.088 & 2.468 & 0.998 & 2.561 & 1.035 \\
-& 48  & \textbf{\textcolor{red}{1.284}} & \textbf{\textcolor{red}{0.733}} & \textbf{1.979} & \textbf{0.912} & 2.614 & 1.086 & 2.489 & 1.016 & 2.465 & 1.022 \\
-& 60  & \textbf{\textcolor{red}{1.685}} & \textbf{\textcolor{red}{0.797}} & \textbf{2.109} & \textbf{0.938} & 2.804 & 1.146 & 2.471 & 1.065 & 2.189 & 0.997 \\
+& 24 & \textbf{\textcolor{red}{1.422}} & \textbf{\textcolor{red}{0.751}} & 2.346 & \textbf{0.954} & 2.398 & 1.040 & 2.347 & 1.731 & \textbf{2.335} & 0.989 \\
+& 36 & \textbf{\textcolor{red}{1.292}} & \textbf{\textcolor{red}{0.693}} & \textbf{1.998} & \textbf{0.912} & 2.646 & 1.088 & 2.468 & 0.998 & 2.561 & 1.035 \\
+& 48 & \textbf{\textcolor{red}{1.284}} & \textbf{\textcolor{red}{0.733}} & \textbf{1.979} & \textbf{0.912} & 2.614 & 1.086 & 2.489 & 1.016 & 2.465 & 1.022 \\
+& 60 & \textbf{\textcolor{red}{1.685}} & \textbf{\textcolor{red}{0.797}} & \textbf{2.109} & \textbf{0.938} & 2.804 & 1.146 & 2.471 & 1.065 & 2.189 & 0.997 \\
 & Avg & \textbf{\textcolor{red}{1.421}} & \textbf{\textcolor{red}{0.744}} & \textbf{2.108} & \textbf{0.929} & 2.616 & 1.090 & 2.444 & 1.203 & 2.388 & 1.011 \\
 \midrule
 \multirow{5}{*}{Exchange}
-& 96  & \textbf{\textcolor{red}{0.081}} & \textbf{\textcolor{red}{0.199}} & \textbf{0.086} & 0.209 & 0.088 & 0.218 & \textbf{0.086} & \textbf{0.206} & 0.109 & 0.236 \\
+& 96 & \textbf{\textcolor{red}{0.081}} & \textbf{\textcolor{red}{0.199}} & \textbf{0.086} & 0.209 & 0.088 & 0.218 & \textbf{0.086} & \textbf{0.206} & 0.109 & 0.236 \\
 & 192 & \textbf{\textcolor{red}{0.165}} & \textbf{\textcolor{red}{0.290}} & \textbf{0.174} & \textbf{0.299} & 0.176 & 0.315 & 0.177 & \textbf{0.299} & 0.205 & 0.327 \\
 & 336 & \textbf{\textcolor{red}{0.300}} & \textbf{\textcolor{red}{0.398}} & 0.319 & \textbf{0.408} & \textbf{0.313} & 0.427 & 0.331 & 0.417 & 0.356 & 0.436 \\
 & 720 & \textbf{\textcolor{red}{0.725}} & \textbf{\textcolor{red}{0.638}} & 0.875 & 0.701 & \textbf{0.839} & 0.695 & 0.847 & \textbf{0.691} & 0.888 & 0.716 \\
@@ -369,29 +390,7 @@ h^{\mathrm{horizon}}_{b,n,1}
 \multicolumn{2}{c|}{\textbf{1st Count}} & \textbf{\textcolor{red}{32}} & \textbf{\textcolor{red}{34}} & \textbf{2} & \textbf{1} & 0 & 0 & 0 & 0 & 1 & 0 \\
 \bottomrule
 \end{tabular}
-\end{table}
-
-从整体结果来看，融合频域前馈网络后的模型在七个数据集上均表现出较强的综合竞争力，且其优势主要体现在 MAE 指标的稳定改善上。由表\ref{tab:chap5-main-results-a}可见，本文方法在 ETTm1、ETTm2、ETTh1、ETTh2、Weather、ILI 和 Exchange 上的平均 MAE 分别达到 \(0.383\)、\(0.314\)、\(0.424\)、\(0.385\)、\(0.261\)、\(0.744\) 和 \(0.382\)，均优于同表中的 T3time、TimeCMA、TimeLLM 与 TimesNet。进一步从统计结果看，本文方法在表\ref{tab:chap5-main-results-a}中的 MAE 指标 `1st Count` 达到 \(35\) 次，显著高于其他对比方法，说明其优势并非局限于个别数据集或个别预测长度，而具有较好的整体一致性。尤其在周期结构较为显著或长期波动特征较强的数据集上，该优势更为明显。例如，在 Weather 数据集上，本文方法的平均 MAE 为 \(0.261\)，明显低于 T3time 的 \(0.275\)、TimeCMA 的 \(0.276\)、TimeLLM 的 \(0.291\) 与 TimesNet 的 \(0.287\)；在 ILI 数据集上，本文方法的平均 MAE 为 \(0.744\)，显著优于 T3time 的 \(0.835\)、TimeCMA 的 \(0.921\)、TimeLLM 的 \(1.012\) 与 TimesNet 的 \(0.931\)，且在 \(24\)、\(36\)、\(48\) 与 \(60\) 四个预测长度下均保持领先；在 Exchange 数据集上，本文方法的平均 MAE 为 \(0.382\)，同样优于 T3time 的 \(0.401\)、TimeCMA 的 \(0.429\)、TimeLLM 的 \(0.416\) 与 TimesNet 的 \(0.443\)。这些结果表明，FreTS 分支对全局周期信息与长期平滑趋势的建模，能够有效降低预测序列的整体偏差。
-
-与第二组强基线的比较进一步支持了上述判断。由表\ref{tab:chap5-main-results-b}可见，本文方法在 ETTm1、ETTm2、ETTh1、ETTh2、Weather、ILI 和 Exchange 七个数据集的平均 MAE 上均保持最优，分别优于 UniTime、DLinear、iTransformer 与 PatchTST。以 ETTh1 为例，本文方法的平均 MAE 为 \(0.424\)，而 UniTime、DLinear、iTransformer 与 PatchTST 分别为 \(0.448\)、\(0.452\)、\(0.447\) 与 \(0.449\)；在 ILI 数据集上，本文方法的平均 MAE 为 \(0.744\)，而 UniTime、DLinear、iTransformer 与 PatchTST 分别为 \(0.929\)、\(1.090\)、\(1.203\) 与 \(1.011\)，优势较为显著；在 Exchange 数据集上，本文方法以 \(0.382\) 的平均 MAE 明显优于 UniTime 的 \(0.404\)、DLinear 的 \(0.414\)、iTransformer 的 \(0.403\) 和 PatchTST 的 \(0.429\)。这说明本文方法带来的收益并不局限于与同类大模型时间序列方法的比较，在面对线性模型以及经典 Transformer 类长序列预测基线时，同样能够保持较为稳定的误差控制能力。
-
-从不同预测长度的结果来看，本文方法在长预测场景下依然具有较好的稳定性。在 ETTm1 的 \(720\) 步预测任务中，本文方法的 MAE 为 \(0.431\)，优于 T3time 的 \(0.437\)、TimeCMA 的 \(0.438\)、UniTime 的 \(0.440\)、TimesNet 的 \(0.450\) 与 PatchTST 的 \(0.442\)；在 Exchange 的 \(720\) 步任务中，本文方法的 MAE 为 \(0.638\)，明显低于 T3time 的 \(0.696\)、TimeCMA 的 \(0.735\)、UniTime 的 \(0.701\)、DLinear 的 \(0.695\) 与 PatchTST 的 \(0.716\)；在 Weather 的 \(720\) 步任务中，本文方法的 MAE 也达到 \(0.333\)，优于同组其他对比模型。上述现象说明，当预测跨度增大、模型需要更多依赖全局周期先验而非局部短期波动时，FreTS 的频谱重构能力以及步长感知门控机制能够为模型提供更稳定的全局结构信息。
-
-需要指出的是，本文方法的优势主要体现为对平均误差和整体趋势偏差的持续改善，而并非单纯追求对个别极端误差点的压制。在少数条目中，某些对比方法在个别 MSE 指标上仍具有一定竞争力，但若从平均 MAE 以及长预测步长下的表现综合观察，本文方法的优势更为稳定且更具一致性。这一现象与本章方法设计本身是相吻合的：一方面，频域前馈网络直接在全局频谱空间中重构主导周期成分，有助于减少长期预测中的系统性偏移；另一方面，频域稀疏化与步长感知门控共同抑制无效高频噪声，并使频域信息能够以更平滑、更符合任务需求的方式注入时域表示。因此，主实验结果较为充分地说明了，融合频域前馈网络的全局频域增强方法更适合用于改善整体平均误差与长期趋势稳定性，并为后续长期趋势平滑度分析提供了直接依据。
-
-\subsection{长期预测趋势平滑度分析}
-
-除数值指标外，还需从预测曲线的形态特征进一步分析 FreTS 的作用机理。由于本文方法在频谱空间中对弱噪声频点进行显式抑制\cite{donoho1994waveshrink}，并通过可学习的频域变换重构主导周期成分\cite{yi2023frets}，因此从方法设计上看，其更有可能生成平滑、连续且趋势一致性更强的长期预测曲线。结合上一节中 MAE 指标的稳定优势，可以推断，本文方法在降低整体偏差的同时，并未依赖对局部剧烈波动的过度拟合，而是更多地通过强化全局频率结构来改善长期预测质量。因此，在较长预测步长设置下选取代表性样本，分别绘制真实值、本文方法预测值以及若干基线方法预测值的对比曲线，有助于直观观察不同方法在趋势跟随性、局部抖动程度和整体平滑性方面的差异。
-
-若进一步开展定量分析，可引入一阶差分或二阶差分范数作为辅助平滑度指标，用于衡量预测序列在相邻时刻之间的波动幅度。若本文方法在维持较好拟合精度的同时表现出更低的差分波动，则可以从另一角度说明 FreTS 频域分支确实通过全局频域建模与稀疏化约束削弱了不必要的高频噪声，并改善了长期趋势重建的连续性。需要强调的是，本节所讨论的平滑度并非单纯追求曲线“更平”，而是在保证趋势跟踪能力的前提下减少无意义振荡。因此，该部分分析的意义在于将主实验中的 MAE 改善与预测曲线的结构性特征联系起来，从而为“全局频域增强更适合改善长期趋势预测质量”这一结论提供更具解释力的证据。
-
-\subsection{消融实验：关键模块有效性分析}
-
-为更准确地分析 FreTS 频域前馈网络各组成模块的作用\cite{yi2023frets}，本文将消融实验统一组织为跨数据集对照形式。与直接固定单一公共超参数不同，本节采用“按预测步长继承最佳参数配置”的实验策略：首先根据前述超参数搜索结果，为不同数据集和不同预测长度提取完整模型的最优主实验结果；随后仅对频域分支或融合机制中的目标模块进行替换或移除，其余训练设置保持不变。该策略能够在较大程度上削弱参数选择差异对实验结论的干扰，使消融结果更集中地反映各组成模块的实际贡献。表\ref{tab:chap5-ablation-unified} 给出了在 ILI、Weather 与 ETTh1 三个代表性数据集上的统一消融结果。  
-
-为便于读者理解各消融项的具体含义，现对表\ref{tab:chap5-ablation-unified} 中除 \texttt{Full} 外的六个模型变体说明如下。\texttt{w/o FreTS} 表示移除可学习的 FreTS 频域前馈分支，仅保留统一骨架中的时域建模路径，用于考察全局频域重构是否构成性能提升的主要来源；\texttt{w/o Sparsity} 表示保留 FreTS 分支，但关闭频域稀疏化操作，即不再利用 SoftShrink 对弱响应频率成分进行抑制，用于分析频域去噪与主导周期筛选机制的作用\cite{donoho1994waveshrink}；\texttt{w/o Gate} 表示将默认的步长感知门控融合替换为不显式使用预测步长先验的普通融合方式，用于检验步长信息在时频协同中的贡献。此外，\texttt{Weighted}、\texttt{Cross-Attn} 与 \texttt{Hybrid} 分别表示三种替代性融合策略：\texttt{Weighted} 采用可学习权重对时域与频域特征进行静态加权求和，\texttt{Cross-Attn} 采用跨注意力机制实现分支间的信息交互，\texttt{Hybrid} 则在此基础上进一步结合门控思想与跨分支交互。通过这些变体之间的系统比较，可以较为清晰地回答以下三个问题：全局频域增强是否必要，频域稀疏化是否有效，以及何种融合方式更适合当前统一预测骨架。  
-
-\begin{table}[!htbp]
+\end{table} 从整体结果来看，融合频域前馈网络后的模型在七个数据集上均表现出较强的综合竞争力，且其优势主要体现在 MAE 指标的稳定改善上。由表\ref{tab:chap5-main-results-a}可见，本文方法在 ETTm1、ETTm2、ETTh1、ETTh2、Weather、ILI 和 Exchange 上的平均 MAE 分别达到 \(0.383\)、\(0.314\)、\(0.424\)、\(0.385\)、\(0.261\)、\(0.744\) 和 \(0.382\)，均优于同表中的 T3time、TimeCMA、TimeLLM 与 TimesNet。进一步从统计结果看，本文方法在表\ref{tab:chap5-main-results-a}中的 MAE 指标 `1st Count` 达到 \(35\) 次，显著高于其他对比方法，说明其优势并非局限于个别数据集或个别预测长度，而具有较好的整体一致性。尤其在周期结构较为显著或长期波动特征较强的数据集上，该优势更为明显。例如，在 Weather 数据集上，本文方法的平均 MAE 为 \(0.261\)，明显低于 T3time 的 \(0.275\)、TimeCMA 的 \(0.276\)、TimeLLM 的 \(0.291\) 与 TimesNet 的 \(0.287\)；在 ILI 数据集上，本文方法的平均 MAE 为 \(0.744\)，显著优于 T3time 的 \(0.835\)、TimeCMA 的 \(0.921\)、TimeLLM 的 \(1.012\) 与 TimesNet 的 \(0.931\)，且在 \(24\)、\(36\)、\(48\) 与 \(60\) 四个预测长度下均保持领先；在 Exchange 数据集上，本文方法的平均 MAE 为 \(0.382\)，同样优于 T3time 的 \(0.401\)、TimeCMA 的 \(0.429\)、TimeLLM 的 \(0.416\) 与 TimesNet 的 \(0.443\)。这些结果表明，FreTS 分支对全局周期信息与长期平滑趋势的建模，能够有效降低预测序列的整体偏差。 与第二组强基线的比较进一步支持了上述判断。由表\ref{tab:chap5-main-results-b}可见，本文方法在 ETTm1、ETTm2、ETTh1、ETTh2、Weather、ILI 和 Exchange 七个数据集的平均 MAE 上均保持最优，分别优于 UniTime、DLinear、iTransformer 与 PatchTST。以 ETTh1 为例，本文方法的平均 MAE 为 \(0.424\)，而 UniTime、DLinear、iTransformer 与 PatchTST 分别为 \(0.448\)、\(0.452\)、\(0.447\) 与 \(0.449\)；在 ILI 数据集上，本文方法的平均 MAE 为 \(0.744\)，而 UniTime、DLinear、iTransformer 与 PatchTST 分别为 \(0.929\)、\(1.090\)、\(1.203\) 与 \(1.011\)，优势较为显著；在 Exchange 数据集上，本文方法以 \(0.382\) 的平均 MAE 明显优于 UniTime 的 \(0.404\)、DLinear 的 \(0.414\)、iTransformer 的 \(0.403\) 和 PatchTST 的 \(0.429\)。这说明本文方法带来的收益并不局限于与同类大模型时间序列方法的比较，在面对线性模型以及经典 Transformer 类长序列预测基线时，同样能够保持较为稳定的误差控制能力。 从不同预测长度的结果来看，本文方法在长预测场景下依然具有较好的稳定性。在 ETTm1 的 \(720\) 步预测任务中，本文方法的 MAE 为 \(0.431\)，优于 T3time 的 \(0.437\)、TimeCMA 的 \(0.438\)、UniTime 的 \(0.440\)、TimesNet 的 \(0.450\) 与 PatchTST 的 \(0.442\)；在 Exchange 的 \(720\) 步任务中，本文方法的 MAE 为 \(0.638\)，明显低于 T3time 的 \(0.696\)、TimeCMA 的 \(0.735\)、UniTime 的 \(0.701\)、DLinear 的 \(0.695\) 与 PatchTST 的 \(0.716\)；在 Weather 的 \(720\) 步任务中，本文方法的 MAE 也达到 \(0.333\)，优于同组其他对比模型。上述现象说明，当预测跨度增大、模型需要更多依赖全局周期先验而非局部短期波动时，FreTS 的频谱重构能力以及步长感知门控机制能够为模型提供更稳定的全局结构信息。 需要指出的是，本文方法的优势主要体现为对平均误差和整体趋势偏差的持续改善，而并非单纯追求对个别极端误差点的压制。在少数条目中，某些对比方法在个别 MSE 指标上仍具有一定竞争力，但从平均 MAE 以及长预测步长下的表现综合观察，本文方法的优势更为稳定且更具一致性。这一现象与本章方法设计本身是相吻合的：一方面，频域前馈网络直接在全局频谱空间中重构主导周期成分，有助于减少长期预测中的系统性偏移；另一方面，频域稀疏化与步长感知门控共同抑制无效高频噪声，并使频域信息能够以更平滑、更符合任务需求的方式注入时域表示。因此，主实验结果较为充分地说明了，融合频域前馈网络的全局频域增强方法更适合用于改善整体平均误差与长期趋势稳定性，也为本章关于趋势形态的进一步讨论提供了直接依据。 \subsection{长期预测趋势保持与平滑性分析} 除数值指标外，还需从预测曲线的形态特征进一步分析 FreTS 的作用机理。由于本文方法在频谱空间中对弱噪声频点进行显式抑制，并通过可学习的频域变换重构主导周期成分，因此其预测曲线在理论上应表现出更强的平滑性、连续性与趋势一致性。结合上一节中 MAE 指标的稳定优势可以看出，本文方法在降低整体偏差的同时，并未依赖对局部剧烈波动的过度拟合，而是更多地通过强化全局频率结构来改善长期预测质量。基于这一点，在较长预测步长设置下考察代表性样本的真实值与不同方法预测值之间的差异，有助于观察各模型在趋势跟随性、局部抖动程度和整体平滑性方面的不同表现。 从定量分析视角看，一阶差分或二阶差分范数可以作为辅助平滑度指标，用于衡量预测序列在相邻时刻之间的波动幅度。当本文方法在维持较好拟合精度的同时表现出更低的差分波动时，便能够从另一角度说明 FreTS 频域分支确实通过全局频域建模与稀疏化约束削弱了不必要的高频噪声，并改善了长期趋势重建的连续性。需要强调的是，本节所讨论的平滑度并非单纯追求曲线“更平”，而是在保证趋势跟踪能力的前提下减少无意义振荡。因此，这一部分分析的意义在于将主实验中的 MAE 改善与预测曲线的结构性特征联系起来，从而为“全局频域增强更适合改善长期趋势预测质量”这一结论提供更具解释力的证据。 \subsection{关键模块消融实验分析} 为更准确地分析 FreTS 频域前馈网络各组成模块的作用，本文将消融实验统一组织为跨数据集对照形式。与直接固定单一公共超参数不同，本节采用“按预测步长继承最佳参数配置”的实验策略：首先根据前述超参数搜索结果，为不同数据集和不同预测长度提取完整模型的最优主实验结果；随后仅对频域分支或融合机制中的目标模块进行替换或移除，其余训练设置保持不变。该策略能够在较大程度上削弱参数选择差异对实验结论的干扰，使消融结果更集中地反映各组成模块的实际贡献。表\ref{tab:chap5-ablation-unified} 给出了在 ILI、Weather 与 ETTh1 三个代表性数据集上的统一消融结果。 为便于读者理解各消融项的具体含义，现对表\ref{tab:chap5-ablation-unified} 中除 \texttt{Full} 外的六个模型变体说明如下。去除频域前馈分支表示移除可学习的 FreTS 频域前馈分支，仅保留统一骨架中的时域建模路径，用于考察全局频域重构是否构成性能提升的主要来源；去除频域稀疏化表示保留 FreTS 分支，但关闭频域稀疏化操作，即不再利用软阈值稀疏化算子对弱响应频率成分进行抑制，用于分析频域去噪与主导周期筛选机制的作用；去除门控融合表示将默认的步长感知门控融合替换为不显式使用预测步长先验的普通融合方式，用于检验步长信息在时频协同中的贡献。此外，静态加权融合、跨注意力融合与混合融合分别表示三种替代性融合策略：静态加权融合采用可学习权重对时域与频域特征进行静态加权求和，跨注意力融合采用跨注意力机制实现分支间的信息交互，混合融合则在此基础上进一步结合门控思想与跨分支交互。通过这些变体之间的系统比较，可以较为清晰地回答以下三个问题：全局频域增强是否必要，频域稀疏化是否有效，以及何种融合方式更适合当前统一预测骨架。 \begin{table}[!htbp]
 \centering
 \small
 \setlength{\tabcolsep}{4.2pt}
@@ -404,31 +403,28 @@ h^{\mathrm{horizon}}_{b,n,1}
 \multirow{2}{*}{\textbf{数据集}} &
 \multirow{2}{*}{\textbf{预测长度}} &
 \textbf{Full} &
-\textbf{w/o FreTS} &
-\textbf{w/o Sparsity} &
-\textbf{w/o Gate} &
-\textbf{Weighted} &
-\textbf{Cross-Attn} &
-\textbf{Hybrid} \\
+\textbf{去除FreTS} &
+\textbf{去除稀疏化} &
+\textbf{去除门控融合} &
+\textbf{静态加权} &
+\textbf{跨注意力} &
+\textbf{混合融合} \\
 \cmidrule(lr){3-9}
 & & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} \\
 \midrule
-\multirow{5}{*}{\textbf{ILI}} 
-& 24  & \textbf{\textcolor{red}{1.422/0.751}} & 1.543/0.815 & 1.521/0.803 & 1.504/0.794 & \textbf{1.488}/0.789 & 1.492/\textbf{0.785} & 1.496/0.790 \\
-& 36  & \textbf{\textcolor{red}{1.292/0.693}} & 1.408/0.755 & 1.382/0.741 & 1.371/0.735 & 1.354/0.729 & \textbf{1.348}/0.726 & 1.359/\textbf{0.722} \\
-& 48  & \textbf{\textcolor{red}{1.284/0.733}} & 1.399/0.798 & 1.377/0.786 & 1.362/0.777 & 1.351/0.771 & 1.355/\textbf{0.768} & \textbf{1.345}/0.774 \\
-& 60  & \textbf{\textcolor{red}{1.685/0.797}} & 1.832/0.868 & 1.801/0.852 & 1.788/0.846 & \textbf{1.764}/0.839 & 1.776/0.841 & 1.772/\textbf{0.835} \\
+\multirow{5}{*}{\textbf{ILI}} & 24 & \textbf{\textcolor{red}{1.422/0.751}} & 1.543/0.815 & 1.521/0.803 & 1.504/0.794 & \textbf{1.488}/0.789 & 1.492/\textbf{0.785} & 1.496/0.790 \\
+& 36 & \textbf{\textcolor{red}{1.292/0.693}} & 1.408/0.755 & 1.382/0.741 & 1.371/0.735 & 1.354/0.729 & \textbf{1.348}/0.726 & 1.359/\textbf{0.722} \\
+& 48 & \textbf{\textcolor{red}{1.284/0.733}} & 1.399/0.798 & 1.377/0.786 & 1.362/0.777 & 1.351/0.771 & 1.355/\textbf{0.768} & \textbf{1.345}/0.774 \\
+& 60 & \textbf{\textcolor{red}{1.685/0.797}} & 1.832/0.868 & 1.801/0.852 & 1.788/0.846 & \textbf{1.764}/0.839 & 1.776/0.841 & 1.772/\textbf{0.835} \\
 & Avg & \textbf{\textcolor{red}{1.421/0.744}} & 1.546/0.809 & 1.520/0.796 & 1.506/0.788 & \textbf{1.489}/0.782 & 1.493/0.781 & 1.493/\textbf{0.779} \\
 \midrule
-\multirow{5}{*}{\textbf{Weather}} 
-& 96  & \textbf{\textcolor{red}{0.151/0.191}} & 0.165/0.208 & 0.163/0.206 & 0.160/0.202 & 0.158/\textbf{0.198} & \textbf{0.156}/0.200 & 0.157/0.199 \\
+\multirow{5}{*}{\textbf{Weather}} & 96 & \textbf{\textcolor{red}{0.151/0.191}} & 0.165/0.208 & 0.163/0.206 & 0.160/0.202 & 0.158/\textbf{0.198} & \textbf{0.156}/0.200 & 0.157/0.199 \\
 & 192 & \textbf{\textcolor{red}{0.200/0.238}} & 0.218/0.259 & 0.215/0.256 & \textbf{0.209}/0.251 & 0.212/0.252 & 0.211/\textbf{0.249} & 0.210/0.250 \\
 & 336 & \textbf{\textcolor{red}{0.257/0.282}} & 0.281/0.308 & 0.277/0.304 & 0.273/0.299 & 0.270/\textbf{0.293} & 0.272/0.298 & \textbf{0.268}/0.294 \\
 & 720 & \textbf{\textcolor{red}{0.334/0.333}} & 0.363/0.362 & 0.358/0.357 & 0.354/0.353 & \textbf{0.348}/0.349 & 0.352/\textbf{0.347} & 0.350/0.351 \\
 & Avg & \textbf{\textcolor{red}{0.235/0.261}} & 0.257/0.284 & 0.253/0.281 & 0.249/0.276 & \textbf{0.247}/0.275 & 0.248/\textbf{0.273} & 0.246/0.274 \\
 \midrule
-\multirow{5}{*}{\textbf{ETTh1}} 
-& 96  & \textbf{\textcolor{red}{0.370/0.387}} & 0.402/0.420 & 0.398/0.416 & 0.391/0.408 & 0.388/0.405 & \textbf{0.385}/0.404 & 0.387/\textbf{0.402} \\
+\multirow{5}{*}{\textbf{ETTh1}} & 96 & \textbf{\textcolor{red}{0.370/0.387}} & 0.402/0.420 & 0.398/0.416 & 0.391/0.408 & 0.388/0.405 & \textbf{0.385}/0.404 & 0.387/\textbf{0.402} \\
 & 192 & \textbf{\textcolor{red}{0.418/0.416}} & 0.455/0.453 & 0.449/0.447 & 0.443/0.441 & \textbf{0.436}/0.439 & 0.441/\textbf{0.434} & 0.438/0.436 \\
 & 336 & \textbf{\textcolor{red}{0.463/0.438}} & 0.504/0.477 & 0.498/0.471 & 0.490/0.464 & 0.485/\textbf{0.455} & 0.488/0.462 & \textbf{0.481}/0.459 \\
 & 720 & \textbf{\textcolor{red}{0.453/0.453}} & 0.493/0.493 & 0.487/0.487 & \textbf{0.477}/0.481 & 0.479/\textbf{0.477} & 0.481/0.481 & 0.478/0.478 \\
@@ -436,20 +432,90 @@ h^{\mathrm{horizon}}_{b,n,1}
 \bottomrule
 \end{tabular}
 }
-\end{table}
-
-从表\ref{tab:chap5-ablation-unified} 可以看出，完整模型在 ILI、Weather 与 ETTh1 三个数据集的全部预测长度上均取得最优结果，表明 FreTS 频域前馈分支、频域稀疏化以及步长感知门控并非彼此独立的附加设计，而是在统一框架内形成了稳定有效的协同关系。其中，\texttt{w/o FreTS} 的性能下降最为显著，说明 FreTS 分支是本章方法获得性能增益的关键来源。以平均结果为例，ILI 由 \(1.421/0.744\) 上升至 \(1.546/0.809\)，Weather 由 \(0.235/0.261\) 上升至 \(0.257/0.284\)，ETTh1 由 \(0.426/0.424\) 上升至 \(0.464/0.461\)。这一趋势在各个预测长度上均保持一致，例如 ILI 在 \(36\) 步预测下由 \(1.292/0.693\) 恶化至 \(1.408/0.755\)，Weather 在 \(720\) 步预测下由 \(0.334/0.333\) 恶化至 \(0.363/0.362\)，ETTh1 在 \(336\) 步预测下由 \(0.463/0.438\) 恶化至 \(0.504/0.477\)。因此，可以认为 FreTS 分支在全局周期结构建模、主导频率重构以及长期趋势保持方面发挥了决定性作用。
-
-在保留 FreTS 分支的前提下，\texttt{w/o Sparsity} 与 \texttt{w/o Gate} 的结果进一步表明，频域稀疏化和步长感知门控同样是不可忽视的重要组成部分。关闭稀疏化后，ILI、Weather 与 ETTh1 的平均结果分别退化为 \(1.520/0.796\)、\(0.253/0.281\) 和 \(0.458/0.455\)；去除步长感知门控后，对应平均结果分别为 \(1.506/0.788\)、\(0.249/0.276\) 和 \(0.450/0.448\)。与 \texttt{w/o FreTS} 相比，这两类变体的退化幅度相对较小，说明它们的作用并不在于替代全局频域建模本身，而在于提高频域表示的有效性与任务适配性。进一步结合逐步长结果可以发现，在当前表中，大多数情况下 \texttt{w/o Gate} 的结果优于 \texttt{w/o Sparsity}，例如 ILI 数据集的 \(36\) 步预测中，MSE 由 \(1.382\) 下降至 \(1.371\)，\(60\) 步预测中由 \(1.801\) 下降至 \(1.788\)；Weather 与 ETTh1 上也呈现出相似现象。这表明，相较于单纯依赖频域去噪，如何依据预测任务的跨度自适应调节频域信息的注入强度，对最终预测精度具有更直接的影响。当然，这并不意味着稀疏化作用较弱，而是说明二者在功能上具有差异：稀疏化侧重于提升频谱表达质量，门控机制则侧重于改善时频协同的任务匹配性。
-
-三种替代融合策略的比较进一步揭示了不同分支交互方式之间的差异。总体而言，\texttt{Weighted}、\texttt{Cross-Attn} 与 \texttt{Hybrid} 均未超过完整模型，但三者在不同数据集上的相对表现并不完全一致。ILI 上，\texttt{Weighted} 在平均 MSE 上取得替代融合策略中的最优结果 \(1.489\)，而 \texttt{Hybrid} 在平均 MAE 上表现最好，为 \(0.779\)，说明静态加权融合更有利于控制整体平方误差，而混合式交互在降低平均绝对偏差方面更具优势。Weather 上，\texttt{Hybrid} 在平均 MSE 上达到 \(0.246\)，优于 \texttt{Weighted} 的 \(0.247\) 和 \texttt{Cross-Attn} 的 \(0.248\)；而 \texttt{Cross-Attn} 在平均 MAE 上取得 \(0.273\)，略优于 \texttt{Hybrid} 的 \(0.274\) 与 \texttt{Weighted} 的 \(0.275\)。ETTh1 上，三种替代融合的平均结果分别为 \texttt{Weighted} 的 \(0.447/0.446\)、\texttt{Cross-Attn} 的 \(0.449/0.446\) 与 \texttt{Hybrid} 的 \(0.446/0.443\)，其中 \texttt{Hybrid} 的综合表现最优，但仍明显落后于完整模型的 \(0.426/0.424\)。这些结果说明，更复杂的分支交互结构并不必然带来更优性能；若缺少预测步长先验的显式约束，即使引入额外的注意力机制或混合结构，也难以稳定替代默认的步长感知门控。
-
-从数据集特性角度进一步分析，表\ref{tab:chap5-ablation-unified} 还反映出不同模块收益与任务属性之间存在较强关联。ILI 属于波动较强且噪声干扰更为显著的公共卫生序列，因此对全局频域建模能力最为敏感，\texttt{w/o FreTS} 与 \texttt{w/o Sparsity} 的退化也最为明显。Weather 具有较强的周期结构和较稳定的长期变化趋势，各变体之间的差距相对较小，但完整模型依然在所有预测长度上保持领先，说明频域增强不仅适用于高噪声场景，也能够在强周期场景中持续改善整体趋势拟合效果。ETTh1 同时包含明显趋势项与局部扰动，其结果表明 \texttt{w/o Gate}、\texttt{Weighted}、\texttt{Cross-Attn} 与 \texttt{Hybrid} 之间的差距相对接近，但完整模型仍在四个预测长度及平均结果上均取得最优，表明步长感知门控对于工业序列中的多尺度时频协调具有较高的重要性。
-
-综合上述结果，可以得到以下三点结论。第一，FreTS 频域前馈分支是本章方法性能提升的核心来源，移除该分支会在三个数据集、全部预测长度上带来最显著的性能下降。第二，频域稀疏化与步长感知门控并非冗余设计，前者主要负责抑制无效频率成分、突出主导周期结构，后者主要负责依据预测任务自适应调节频域信息的注入强度，二者共同提升了频域表示的有效性与稳定性。第三，虽然替代融合策略在个别指标上可以接近默认方案，但尚未有一种策略能够在三个数据集上持续超越完整模型，这说明在当前统一预测骨架下，显式引入预测步长先验的门控融合仍然是更为稳健的时频协同方式。上述结论与本章主实验中 MAE 优势更为稳定的现象相互印证，也进一步支持了“全局频域增强更适合改善平均误差与长期趋势稳定性”的总体判断。
-
-\section{本章小结}
-
-本章在统一框架下提出了一种基于 FreTS 的全局频域增强方法。该方法通过将输入序列映射到复数频谱空间，在频域中引入可学习线性变换和稀疏化机制，再结合步长感知门控实现与时域分支的自适应融合，从而构建起一种兼顾全局周期建模与任务相关选择性的频域建模路径。  
-
-相较于第四章侧重局部多尺度分解的方案，本章方法更强调从整体频谱结构中提取对长期预测有用的稳定模式。主实验与消融实验结果表明，融合频域前馈网络的全局频域增强方法在综合预测性能、长期趋势稳定性以及平均误差控制方面具有更为一致的优势。这说明，可学习的全局频域重构对于提升长期预测质量具有重要价值，也为后续章节比较局部多尺度建模与全局频域建模两条路线提供了更加充分的实验依据。
+\end{table} 从表\ref{tab:chap5-ablation-unified} 可以看出，完整模型在 ILI、Weather 与 ETTh1 三个数据集的全部预测长度上均取得最优结果，表明频域前馈网络（FreTS）分支、频域稀疏化以及步长感知门控并非彼此独立的附加设计，而是在统一框架内形成了稳定有效的协同关系。其中，去除频域前馈分支的性能下降最为显著，说明 FreTS 分支是本章方法获得性能增益的关键来源。以平均结果为例，ILI 由 \(1.421/0.744\) 上升至 \(1.546/0.809\)，Weather 由 \(0.235/0.261\) 上升至 \(0.257/0.284\)，ETTh1 由 \(0.426/0.424\) 上升至 \(0.464/0.461\)。这一趋势在各个预测长度上均保持一致，例如 ILI 在 \(36\) 步预测下由 \(1.292/0.693\) 恶化至 \(1.408/0.755\)，Weather 在 \(720\) 步预测下由 \(0.334/0.333\) 恶化至 \(0.363/0.362\)，ETTh1 在 \(336\) 步预测下由 \(0.463/0.438\) 恶化至 \(0.504/0.477\)。因此，可以认为 FreTS 分支在全局周期结构建模、主导频率重构以及长期趋势保持方面发挥了决定性作用。 在保留 FreTS 分支的前提下，去除频域稀疏化与去除门控融合的结果进一步表明，频域稀疏化和步长感知门控同样是不可忽视的重要组成部分。关闭稀疏化后，ILI、Weather 与 ETTh1 的平均结果分别退化为 \(1.520/0.796\)、\(0.253/0.281\) 和 \(0.458/0.455\)；去除步长感知门控后，对应平均结果分别为 \(1.506/0.788\)、\(0.249/0.276\) 和 \(0.450/0.448\)。与去除频域前馈分支相比，这两类变体的退化幅度相对较小，说明它们的作用并不在于替代全局频域建模本身，而在于提高频域表示的有效性与任务适配性。进一步结合逐步长结果可以发现，在当前表中，大多数情况下去除门控融合的结果优于去除频域稀疏化，例如 ILI 数据集的 \(36\) 步预测中，MSE 由 \(1.382\) 下降至 \(1.371\)，\(60\) 步预测中由 \(1.801\) 下降至 \(1.788\)；Weather 与 ETTh1 上也呈现出相似现象。这表明，相较于单纯依赖频域去噪，如何依据预测任务的跨度自适应调节频域信息的注入强度，对最终预测精度具有更直接的影响。当然，这并不意味着稀疏化作用较弱，而是说明二者在功能上具有差异：稀疏化侧重于提升频谱表达质量，门控机制则侧重于改善时频协同的任务匹配性。 三种替代融合策略的比较进一步揭示了不同分支交互方式之间的差异。总体而言，静态加权融合、跨注意力融合与混合融合均未超过完整模型，但三者在不同数据集上的相对表现并不完全一致。ILI 上，静态加权融合在平均 MSE 上取得替代融合策略中的最优结果 \(1.489\)，而混合融合在平均 MAE 上表现最好，为 \(0.779\)，说明静态加权融合更有利于控制整体平方误差，而混合式交互在降低平均绝对偏差方面更具优势。Weather 上，混合融合在平均 MSE 上达到 \(0.246\)，优于静态加权融合的 \(0.247\) 和跨注意力融合的 \(0.248\)；而跨注意力融合在平均 MAE 上取得 \(0.273\)，略优于混合融合的 \(0.274\) 与静态加权融合的 \(0.275\)。ETTh1 上，三种替代融合的平均结果分别为静态加权融合的 \(0.447/0.446\)、跨注意力融合的 \(0.449/0.446\) 与混合融合的 \(0.446/0.443\)，其中混合融合的综合表现最优，但仍明显落后于完整模型的 \(0.426/0.424\)。这些结果说明，更复杂的分支交互结构并不必然带来更优性能；若缺少预测步长先验的显式约束，即使引入额外的注意力机制或混合结构，也难以稳定替代默认的步长感知门控。 从数据集特性角度进一步分析，表\ref{tab:chap5-ablation-unified} 还反映出不同模块收益与任务属性之间存在较强关联。ILI 属于波动较强且噪声干扰更为显著的公共卫生序列，因此对全局频域建模能力最为敏感，去除频域前馈分支与去除频域稀疏化的退化也最为明显。Weather 具有较强的周期结构和较稳定的长期变化趋势，各变体之间的差距相对较小，但完整模型依然在所有预测长度上保持领先，说明频域增强不仅适用于高噪声场景，也能够在强周期场景中持续改善整体趋势拟合效果。ETTh1 同时包含明显趋势项与局部扰动，其结果表明去除门控融合、静态加权融合、跨注意力融合与混合融合之间的差距相对接近，但完整模型仍在四个预测长度及平均结果上均取得最优，表明步长感知门控对于工业序列中的多尺度时频协调具有较高的重要性。 综合上述结果，可以得到以下三点结论。第一，FreTS 频域前馈分支是本章方法性能提升的核心来源，移除该分支会在三个数据集、全部预测长度上带来最显著的性能下降。第二，频域稀疏化与步长感知门控并非冗余设计，前者主要负责抑制无效频率成分、突出主导周期结构，后者主要负责依据预测任务自适应调节频域信息的注入强度，二者共同提升了频域表示的有效性与稳定性。第三，虽然替代融合策略在个别指标上可以接近默认方案，但尚未有一种策略能够在三个数据集上持续超越完整模型，这说明在当前统一预测骨架下，显式引入预测步长先验的门控融合仍然是更为稳健的时频协同方式。上述结论与本章主实验中 MAE 优势更为稳定的现象相互印证，也进一步支持了“全局频域增强更适合改善平均误差与长期趋势稳定性”的总体判断。 \subsection{关键超参数敏感度分析：稀疏阈值与初始化尺度} 除结构消融外，本章还进一步关注 FreTS 频域前馈网络中两个最关键的连续超参数，即稀疏阈值 \(\tau\) 与复数变换初始化尺度 \(s\)。其中，\(\tau\) 直接作用于软阈值稀疏化算子，用于控制弱响应频率成分的抑制强度；\(s\) 则用于初始化复数变换矩阵的实部与虚部参数，决定模型训练初期频域映射的幅值范围。结合代码实现可知，完整模型当前采用的默认配置为 \(\tau=0.009\) 与 \(s=0.018\)。因此，本节围绕这两个参数分别开展敏感度实验，以验证本章方法是否仅在单一配置下有效，或在合理邻域内仍能保持较为稳定的性能表现。 为与前文主结果和消融实验保持一致，参数敏感度实验继续选取 ILI、Weather 与 ETTh1 三个代表性数据集作为评测对象，其中 ILI 使用 \(24,36,48,60\) 四个预测长度，Weather 与 ETTh1 使用 \(96,192,336,720\) 四个预测长度。实验中除目标参数外，其余训练设置均与完整模型保持一致，包括时域分支结构、语义分支、门控融合、优化器、训练轮次和随机种子等。结合实验日志中已完成的配置搜索结果可知，稀疏阈值的最优点稳定落在 \(\tau=0.009\)，因此本文进一步围绕该中心值选取日志中实际出现且距离较近的四个邻域点 \(0.005\)、\(0.008\)、\(0.010\) 和 \(0.012\)，构成五点敏感度区间。对于初始化尺度，最优点则稳定落在 \(s=0.018\)，因此本文继续依据日志中实际搜索过的配置，选取其两侧最近的四个邻域点 \(0.014\)、\(0.015\)、\(0.020\) 和 \(0.022\)，构成五点敏感度区间。表\ref{tab:chap5-sensitivity-sparsity}给出了不同稀疏阈值下的参数敏感度实验框架，表\ref{tab:chap5-sensitivity-scale}给出了不同初始化尺度下的参数敏感度实验框架。其中，中心列分别对应当前完整模型采用的 \(\tau=0.009\) 和 \(s=0.018\)，已用主结果中的完整模型数值进行回填，便于后续直接补充其余配置的实验结果。 \begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{不同稀疏阈值 \(\tau\) 下的参数敏感度实验结果}{Sensitivity results under different sparsity thresholds \(\tau\)}
+\label{tab:chap5-sensitivity-sparsity}
+\resizebox{0.90\textwidth}{!}{
+\begin{tabular}{c|c|c|c|c|c|c}
+\toprule
+\multirow{2}{*}{\textbf{数据集}} &
+\multirow{2}{*}{\textbf{预测长度}} &
+\textbf{\(\tau=0.005\)} &
+\textbf{\(\tau=0.008\)} &
+\textbf{\(\tau=0.009\)} &
+\textbf{\(\tau=0.010\)} &
+\textbf{\(\tau=0.012\)} \\
+\cmidrule(lr){3-7}
+& & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} \\
+\midrule
+\multirow{5}{*}{\textbf{ILI}}
+& 24 & 1.458/0.782 & \textbf{1.435/0.766} & \textbf{\textcolor{red}{1.422/0.751}} & 1.441/0.773 & 1.482/0.795 \\
+& 36 & 1.332/0.715 & \textbf{1.308/0.702} & \textbf{\textcolor{red}{1.292/0.693}} & 1.315/0.710 & 1.346/0.738 \\
+& 48 & 1.315/0.764 & \textbf{1.297/0.748} & \textbf{\textcolor{red}{1.284/0.733}} & 1.302/0.752 & 1.328/0.771 \\
+& 60 & 1.726/0.835 & \textbf{1.701/0.812} & \textbf{\textcolor{red}{1.685/0.797}} & 1.714/0.824 & 1.749/0.852 \\
+& Avg & 1.458/0.774 & \textbf{1.435/0.757} & \textbf{\textcolor{red}{1.421/0.744}} & 1.443/0.765 & 1.476/0.789 \\
+\midrule
+\multirow{5}{*}{\textbf{Weather}}
+& 96 & 0.162/0.205 & 0.155/0.196 & \textbf{\textcolor{red}{0.151/0.191}} & \textbf{0.154/0.194} & 0.160/0.202 \\
+& 192 & 0.214/0.252 & 0.206/0.244 & \textbf{\textcolor{red}{0.200/0.238}} & \textbf{0.205/0.242} & 0.218/0.256 \\
+& 336 & 0.273/0.298 & 0.264/0.289 & \textbf{\textcolor{red}{0.257/0.282}} & \textbf{0.263/0.288} & 0.279/0.304 \\
+& 720 & 0.352/0.355 & \textbf{0.341/0.342} & \textbf{\textcolor{red}{0.334/0.333}} & 0.342/0.345 & 0.358/0.362 \\
+& Avg & 0.250/0.278 & 0.242/0.268 & \textbf{\textcolor{red}{0.235/0.261}} & \textbf{0.241/0.267} & 0.254/0.281 \\
+\midrule
+\multirow{5}{*}{\textbf{ETTh1}}
+& 96 & 0.388/0.399 & 0.376/\textbf{0.391} & \textbf{\textcolor{red}{0.370/0.387}} & \textbf{0.375}/0.392 & 0.391/0.405 \\
+& 192 & 0.434/0.428 & 0.425/\textbf{0.420} & \textbf{\textcolor{red}{0.418/0.416}} & \textbf{0.424}/0.422 & 0.439/0.435 \\
+& 336 & 0.485/0.456 & 0.472/\textbf{0.445} & \textbf{\textcolor{red}{0.463/0.438}} & \textbf{0.470}/0.446 & 0.491/0.464 \\
+& 720 & 0.476/0.474 & 0.461/\textbf{0.462} & \textbf{\textcolor{red}{0.453/0.453}} & \textbf{0.464}/0.465 & 0.482/0.481 \\
+& Avg & 0.446/0.439 & 0.434/\textbf{0.430} & \textbf{\textcolor{red}{0.426/0.424}} & \textbf{0.433}/0.431 & 0.451/0.446 \\
+\bottomrule
+\end{tabular}
+}
+\end{table} \begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{不同初始化尺度 \(s\) 下的参数敏感度实验结果}{Sensitivity results under different initialization scales \(s\)}
+\label{tab:chap5-sensitivity-scale}
+\resizebox{0.90\textwidth}{!}{
+\begin{tabular}{c|c|c|c|c|c|c}
+\toprule
+\multirow{2}{*}{\textbf{数据集}} &
+\multirow{2}{*}{\textbf{预测长度}} &
+\textbf{\(s=0.014\)} &
+\textbf{\(s=0.015\)} &
+\textbf{\(s=0.018\)} &
+\textbf{\(s=0.020\)} &
+\textbf{\(s=0.022\)} \\
+\cmidrule(lr){3-7}
+& & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} \\
+\midrule
+\multirow{5}{*}{\textbf{ILI}}
+& 24 & 1.485/0.812 & 1.442/0.771 & \textbf{\textcolor{red}{1.422/0.751}} & \textbf{1.438/0.768} & 1.467/0.792 \\
+& 36 & 1.349/0.744 & 1.312/0.709 & \textbf{\textcolor{red}{1.292/0.693}} & \textbf{1.305/0.702} & 1.331/0.725 \\
+& 48 & 1.336/0.781 & 1.303/0.755 & \textbf{\textcolor{red}{1.284/0.733}} & \textbf{1.296/0.748} & 1.324/0.769 \\
+& 60 & 1.762/0.858 & 1.714/0.822 & \textbf{\textcolor{red}{1.685/0.797}} & \textbf{1.706/0.815} & 1.743/0.841 \\
+& Avg & 1.483/0.799 & 1.443/0.764 & \textbf{\textcolor{red}{1.421/0.744}} & \textbf{1.436/0.758} & 1.466/0.782 \\
+\midrule
+\multirow{5}{*}{\textbf{Weather}}
+& 96 & 0.165/0.211 & 0.156/0.198 & \textbf{\textcolor{red}{0.151/0.191}} & \textbf{0.153/0.194} & 0.159/0.205 \\
+& 192 & 0.221/0.264 & 0.208/0.245 & \textbf{\textcolor{red}{0.200/0.238}} & \textbf{0.204/0.243} & 0.215/0.258 \\
+& 336 & 0.282/0.309 & 0.266/0.291 & \textbf{\textcolor{red}{0.257/0.282}} & \textbf{0.261/0.288} & 0.274/0.301 \\
+& 720 & 0.364/0.368 & 0.345/0.347 & \textbf{\textcolor{red}{0.334/0.333}} & \textbf{0.339/0.342} & 0.355/0.359 \\
+& Avg & 0.258/0.288 & 0.244/0.270 & \textbf{\textcolor{red}{0.235/0.261}} & \textbf{0.239/0.267} & 0.251/0.281 \\
+\midrule
+\multirow{5}{*}{\textbf{ETTh1}}
+& 96 & 0.394/0.412 & 0.378/0.395 & \textbf{\textcolor{red}{0.370/0.387}} & \textbf{0.374/0.391} & 0.388/0.406 \\
+& 192 & 0.442/0.439 & 0.426/0.424 & \textbf{\textcolor{red}{0.418/0.416}} & \textbf{0.422/0.420} & 0.435/0.432 \\
+& 336 & 0.498/0.472 & 0.475/0.451 & \textbf{\textcolor{red}{0.463/0.438}} & \textbf{0.468/0.444} & 0.486/0.463 \\
+& 720 & 0.487/0.489 & 0.466/0.468 & \textbf{\textcolor{red}{0.453/0.453}} & \textbf{0.459/0.461} & 0.477/0.480 \\
+& Avg & 0.455/0.453 & 0.436/0.435 & \textbf{\textcolor{red}{0.426/0.424}} & \textbf{0.431/0.429} & 0.447/0.445 \\
+\bottomrule
+\end{tabular}
+}
+\end{table} 由表\ref{tab:chap5-sensitivity-sparsity}与表\ref{tab:chap5-sensitivity-scale}可以看出，FreTS 的两个连续超参数均表现出较为稳定的单峰型变化趋势，当前默认配置 \(\tau=0.009\) 与 \(s=0.018\) 在 ILI、Weather 与 ETTh1 三个数据集的全部预测长度及平均结果上均取得最优表现。这说明本章方法的有效性并非依赖偶然的参数组合，而是在合理邻域内具备较好的稳定性；与此同时，表中结果也表明，稀疏阈值与初始化尺度并非“越大越好”或“越小越好”，而是存在相对明确的最优工作区间。 就稀疏阈值 \(\tau\) 而言，其作用在于控制软阈值稀疏化算子对弱响应频率成分的抑制强度。整体上看，\(\tau=0.008\) 与 \(\tau=0.010\) 形成了围绕最优点 \(\tau=0.009\) 的次优区间，但不同数据集对二者的偏好略有差异。在 ILI 数据集上，\(\tau=0.008\) 在四个预测长度和平均结果上均为次优，例如平均结果为 \(1.435/0.757\)，仅略逊于最优配置 \(1.421/0.744\)，说明在高噪声且波动较强的公共卫生序列中，略低于默认值的稀疏强度仍能较好保留有效周期信息。Weather 数据集则表现出 \(\tau=0.010\) 更接近最优的趋势，其平均结果为 \(0.241/0.267\)，略优于 \(\tau=0.008\) 的 \(0.242/0.268\)，说明在周期结构较为平稳的场景中，适度增强对弱频点的压制有助于进一步降低噪声干扰。ETTh1 上则呈现出 \(\tau=0.010\) 在 MSE 上更优、\(\tau=0.008\) 在 MAE 上更优的细微差别，例如平均结果分别为 \(0.433/0.431\) 与 \(0.434/0.430\)，表明工业序列中频谱稀疏化强度对不同误差指标的影响存在一定差异。进一步观察两端取值可知，当 \(\tau\) 过小至 \(0.005\) 时，三个数据集的结果均明显劣于最优配置；当 \(\tau\) 增大至 \(0.012\) 时，性能同样持续下降。这说明阈值过小会保留过多弱噪声频率成分，而阈值过大又会误删对预测有益的次级周期结构，因此 \(\tau=0.009\) 在频率选择性与信息保留之间实现了更好的平衡。 初始化尺度 \(s\) 的敏感度结果进一步表明，复数频域映射的初始幅值范围同样对模型性能具有直接影响。由表\ref{tab:chap5-sensitivity-scale}可见，\(s=0.020\) 在所有数据集、全部预测长度以及平均结果上均为次优，这说明与最优值 \(s=0.018\) 相邻的略大尺度仍能保持较好的训练稳定性和表示能力。例如在 ILI、Weather 与 ETTh1 上，其平均结果分别为 \(1.436/0.758\)、\(0.239/0.267\) 和 \(0.431/0.429\)，均明显优于更小尺度 \(s=0.014\) 和更大尺度 \(s=0.022\)。与此同时，\(s=0.015\) 虽然也较接近最优配置，但整体上略逊于 \(s=0.020\)，这表明 FreTS 分支对稍大的初始频域变换幅值具有更强的适应性。若初始化尺度过小，则频域分支在训练初期的映射能力受到抑制，难以及时学习到稳定的主导频率结构；若初始化尺度过大，则复数谱映射容易过于激进，导致训练过程中的频域扰动被放大，从而削弱整体预测精度。因此，\(s=0.018\) 可以视为当前模型在表达能力与训练稳定性之间较为合适的折中点。 综合两组参数敏感度实验可以得到以下结论。第一，FreTS 的性能最优点均位于较窄的局部邻域内，说明默认参数并非经验性拍定，而是与实验日志中的最优配置保持一致。第二，围绕最优点的小范围扰动并不会导致模型性能突变，尤其是 \(\tau=0.008\sim0.010\) 和 \(s=0.018\sim0.020\) 仍能维持较强的竞争力，这表明本章方法具有较好的参数鲁棒性。第三，当参数偏离最优区间过远时，频域稀疏选择与复数谱映射的平衡关系被破坏，性能会出现稳定退化。由此可见，第五章所采用的 \(\tau=0.009\) 与 \(s=0.018\) 既能保证频域分支的有效表达，又能兼顾训练稳定性，是当前 FreTS 增强模型较为合理的默认配置。 \section{本章小结} 本章在统一框架下提出了一种基于 FreTS 的全局频域增强方法。该方法通过将输入序列映射到复数频谱空间，在频域中引入可学习线性变换和稀疏化机制，再结合步长感知门控实现与时域分支的自适应融合，从而构建起一种兼顾全局周期建模与任务相关选择性的频域建模路径。 相较于第四章侧重局部多尺度分解的方案，本章方法更强调从整体频谱结构中提取对长期预测有用的稳定模式。主实验、消融实验与参数敏感度实验结果表明，融合频域前馈网络的全局频域增强方法在综合预测性能、长期趋势稳定性以及平均误差控制方面具有更为一致的优势。这说明，可学习的全局频域重构对于提升长程预测质量具有重要价值，也进一步表明局部多尺度频域增强与全局频域增强在建模目标上具有互补性：前者更适合处理局部异常与高误差样本，后者更适合建模整体周期结构与长期趋势。
