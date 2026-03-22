@@ -58,7 +58,7 @@
 
 1. \textbf{MSE 与大误差的关系}
 \begin{itemize}
-\item 回顾 MSE = \(\frac{1}{n}\sum e_i^2\)：少数\textbf{大误差}会因平方项主导整体 MSE；因此要降低 MSE，需重点\textbf{抑制大误差点}（极端预测偏差）。
+\item 回顾 MSE 可理解为误差平方的平均：少数\textbf{大误差}会因平方项主导整体 MSE；因此要降低 MSE，需重点\textbf{抑制大误差点}（极端预测偏差）。
 \end{itemize}
 
 2. \textbf{WPD 的机制如何作用于大误差}
@@ -81,7 +81,7 @@
 
 1. \textbf{MAE 与整体误差分布的关系}
 \begin{itemize}
-\item 回顾 MAE = \(\frac{1}{n}\sum |e_i|\)：对所有误差一视同仁，\textbf{整体偏差的均匀降低}更能改善 MAE，而非仅针对少数大误差。
+\item 回顾 MAE 可理解为误差绝对值的平均：对所有误差一视同仁，\textbf{整体偏差的均匀降低}更能改善 MAE，而非仅针对少数大误差。
 \end{itemize}
 
 2. \textbf{FreTS 的机制如何作用于整体误差}
@@ -129,13 +129,13 @@
 
 1. \textbf{复杂度来源}
 \begin{itemize}
-\item \textbf{WPD 模型}：小波包分解（与 level、序列长度相关）、多路子带编码（每路一个门控 Transformer + 注意力池化）、CMA 与预测头；可给出每部分的时间/空间复杂度量级（如 \(O(L)\)、\(O(L^2)\) 等），或与序列长度 \(L\)、变量数 \(N\)、子带数等的关系。
-\item \textbf{FreTS 模型}：FFT/IFFT（\(O(L\log L)\)）、可学习复数线性（与通道维、频点相关）、门控编码与池化、CMA 与预测头；与 WPD 在“频域计算 vs 多路编码”上的差异可简要对比。
+\item \textbf{WPD 模型}：小波包分解（与分解层数和序列长度相关）、多路子带编码（每路一个门控 Transformer + 注意力池化）、CMA 与预测头；可给出每部分的时间/空间复杂度量级，如线性级、平方级等，或说明其与序列长度、变量数和子带数之间的关系。
+\item \textbf{FreTS 模型}：FFT/IFFT（近似 L log L 量级）、可学习复数线性（与通道维、频点相关）、门控编码与池化、CMA 与预测头；与 WPD 在“频域计算 vs 多路编码”上的差异可简要对比。
 \end{itemize}
 
 2. \textbf{对比结论}
 \begin{itemize}
-\item 用表格或文字说明：在相同 \(L_{\text{in}}\)、\(L_{\text{pred}}\)、\(N\) 下，两模型的参数量、推理时间（或 FLOPs）的相对关系；若 WPD 因多路编码更重、FreTS 因 FFT 更轻，可点出“FreTS 在复杂度上更具优势”等，为 6.4 节“在资源受限时可选 FreTS”等建议做铺垫。
+\item 用表格或文字说明：在相同输入长度、预测长度和变量数下，两模型的参数量、推理时间（或 FLOPs）的相对关系；若 WPD 因多路编码更重、FreTS 因 FFT 更轻，可点出“FreTS 在复杂度上更具优势”等，为 6.4 节“在资源受限时可选 FreTS”等建议做铺垫。
 \end{itemize}
 
 ---
