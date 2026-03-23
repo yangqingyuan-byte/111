@@ -20,19 +20,23 @@ fi
 
 Tmp="Tmp"
 
+if [[ ! -e "$Tmp/Biblio" ]]; then
+    ln -s ../Biblio "$Tmp/Biblio"
+fi
 
 $TexCompiler --output-directory=$Tmp $FileName || exit
 
 
 if [[ -n $BibCompiler ]]; then
 
-    $BibCompiler $Tmp/$FileName
+    (
+        cd "$Tmp"
+        $BibCompiler "$FileName"
+    )
 
     $TexCompiler --output-directory=$Tmp $FileName || exit
     $TexCompiler --output-directory=$Tmp $FileName || exit
 fi
 
 echo "build finished..."
-
-
 

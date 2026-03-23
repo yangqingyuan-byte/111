@@ -214,10 +214,10 @@
 				\setCJKsansfont[AutoFakeBold]{AdobeHeitiStd-Regular}%
 				\setCJKmonofont{AdobeFangsongStd-Regular}%
 			\fi\fi\fi
-	\ifartx@times%
-		% Use metrically compatible fonts when Microsoft core fonts are unavailable.
-		\setmainfont[NFSSFamily=entextrm,ItalicFont=Tinos Italic]{Tinos}%
-		\setsansfont[NFSSFamily=entextsf,ItalicFont=Arimo Italic]{Arimo}%
+		\ifartx@times%
+			% Use fonts that ship with macOS so the template compiles out of the box.
+			\setmainfont[NFSSFamily=entextrm,BoldFont=Times New Roman Bold,ItalicFont=Times New Roman Italic,BoldItalicFont=Times New Roman Bold Italic]{Times New Roman}%
+			\setsansfont[NFSSFamily=entextsf,BoldFont=Helvetica Bold,ItalicFont=Helvetica Oblique,BoldItalicFont=Helvetica Bold Oblique]{Helvetica}%
 	\else
 		\setmainfont[NFSSFamily=entextrm]{FreeSerif}%
 		\setsansfont[NFSSFamily=entextsf]{FreeSerif}%

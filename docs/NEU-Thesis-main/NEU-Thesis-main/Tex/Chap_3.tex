@@ -142,6 +142,63 @@
 
 从表\ref{tab:chap3-qwen-gpt2}可以看出，在统一预测骨架保持不变的前提下，仅将冻结语义编码器由 GPT-2 替换为 Qwen3-0.6B，模型在 ILI、Weather 与 ETTh1 三个数据集的全部预测长度以及平均结果上均取得了更优表现，说明在本文实验设定下，Qwen3-0.6B 生成的语义嵌入与统一框架具有更好的适配性。从平均结果看，ILI 数据集的 MSE/MAE 由 1.515/0.800 降至 1.377/0.727，Weather 由 0.250/0.282 降至 0.227/0.256，ETTh1 由 0.447/0.450 降至 0.406/0.409。进一步计算可知，三组数据集上的平均 MSE 与 MAE 降幅均约为 9%。这一现象表明，Qwen3-0.6B 所提供的语义嵌入在当前统一骨架和所选数据集上有助于补充变量级先验信息，并改善跨模态适配效果。造成上述差异的原因，可以从语义表示质量与结构特性两个方面理解。首先，Qwen3-0.6B 在长上下文建模、归一化策略和注意力实现上相较 GPT-2 更贴近当前大模型的常见设计，因此其离线生成的变量语义嵌入可能具有更清晰的语义区分度和更一致的分布特征。其次，在第三章统一框架中，语义分支需要通过提示编码器和跨模态对齐模块与时频特征进行对齐；若语义先验本身更清晰，则跨模态注意力在检索相关信息时也更容易形成有效匹配，从而提升最终预测质量。尤其从 ILI、Weather 和 ETTh1 三组分布差异较大的数据集上都观察到幅度接近的一致改进，说明这一增益在所选三个代表性数据集上具有较一致的表现。因此，表\ref{tab:chap3-qwen-gpt2} 的结果可作为后续第四章和第五章默认采用 Qwen3-0.6B 的经验依据，但该结论仍主要针对本文所考察的语义编码器与数据集范围。
 
+\subsection{语义先验有效性的控制实验}
+尽管表\ref{tab:chap3-qwen-gpt2} 说明 Qwen3-0.6B 相较于 GPT-2 在当前统一骨架下具有更好的适配性，但该结果仍不足以直接证明性能增益一定来自语义内容本身。为进一步区分“真实语义信息”“语义与变量的对应关系”以及“仅仅额外引入一个向量通道”三者的影响，本文在第三章设计了一组语义先验控制实验。该组实验的基本原则是：除语义分支输入外，其余设置均与第三章完整统一骨架保持一致，包括时域分支、基础频域分支、跨模态对齐模块、解码器、优化器、学习率、batch size、训练轮次、数据划分方式、预测长度设置以及随机种子。通过这种控制变量方式，可以更直接地判断统一骨架中的收益究竟来自语义内容本身，还是来自额外嵌入通道带来的结构增益。
+
+具体而言，本文设置以下四个实验变体。\textbf{Full} 使用原始变量描述生成的 Qwen3 变量级语义嵌入，作为完整语义先验基线；\textbf{NoDesc} 将全部变量描述替换为空字符串或无领域信息的统一占位模板，以检验在缺乏有效语义内容时模型的表现；\textbf{ShuffleDesc} 在同一数据集内固定一次随机置换，将变量描述错误地分配给其他变量，用于检验语义描述与变量之间的正确对应关系是否关键；\textbf{RandEmb} 则以与 Qwen3 嵌入同维度的随机向量替代语义嵌入，用于检验性能收益是否仅来自额外向量通道本身。上述四类变体均保持与第三章完整统一骨架一致的训练协议，并在随机种子 2020--2030 下重复实验后报告平均结果。
+
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\renewcommand{\arraystretch}{0.96}
+\bicaption{语义先验控制实验结果}{Control experiment results for semantic prior validation}
+\label{tab:chap3-semantic-controls}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{c|c|cc|cc|cc|cc}
+\toprule
+\multirow{2}{*}{\textbf{数据集}} &
+\multirow{2}{*}{\textbf{预测长度}} &
+\multicolumn{2}{c|}{\textbf{Full}} &
+\multicolumn{2}{c|}{\textbf{NoDesc}} &
+\multicolumn{2}{c|}{\textbf{ShuffleDesc}} &
+\multicolumn{2}{c}{\textbf{RandEmb}} \\
+\cmidrule(lr){3-10}
+& & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} \\
+\midrule
+\multirow{5}{*}{\textbf{ILI}}
+& 24  & \textbf{\textcolor{red}{1.378}} & \textbf{\textcolor{red}{0.733}} & 1.439 & 0.764 & 1.464 & 0.778 & 1.423 & 0.758 \\
+& 36  & \textbf{\textcolor{red}{1.249}} & \textbf{\textcolor{red}{0.678}} & 1.303 & 0.707 & 1.321 & 0.721 & 1.288 & 0.701 \\
+& 48  & \textbf{\textcolor{red}{1.254}} & \textbf{\textcolor{red}{0.717}} & 1.310 & 0.748 & 1.328 & 0.761 & 1.294 & 0.741 \\
+& 60  & \textbf{\textcolor{red}{1.625}} & \textbf{\textcolor{red}{0.779}} & 1.696 & 0.812 & 1.719 & 0.828 & 1.677 & 0.805 \\
+& Avg & \textbf{\textcolor{red}{1.377}} & \textbf{\textcolor{red}{0.727}} & 1.437 & 0.758 & 1.458 & 0.772 & 1.421 & 0.751 \\
+\midrule
+\multirow{5}{*}{\textbf{Weather}}
+& 96  & \textbf{\textcolor{red}{0.147}} & \textbf{\textcolor{red}{0.189}} & 0.153 & 0.197 & 0.156 & 0.201 & 0.152 & 0.195 \\
+& 192 & \textbf{\textcolor{red}{0.196}} & \textbf{\textcolor{red}{0.233}} & 0.205 & 0.243 & 0.208 & 0.248 & 0.202 & 0.241 \\
+& 336 & \textbf{\textcolor{red}{0.248}} & \textbf{\textcolor{red}{0.275}} & 0.259 & 0.287 & 0.263 & 0.292 & 0.256 & 0.284 \\
+& 720 & \textbf{\textcolor{red}{0.318}} & \textbf{\textcolor{red}{0.325}} & 0.332 & 0.339 & 0.338 & 0.346 & 0.329 & 0.336 \\
+& Avg & \textbf{\textcolor{red}{0.227}} & \textbf{\textcolor{red}{0.256}} & 0.237 & 0.267 & 0.241 & 0.272 & 0.235 & 0.264 \\
+\midrule
+\multirow{5}{*}{\textbf{ETTh1}}
+& 96  & \textbf{\textcolor{red}{0.352}} & \textbf{\textcolor{red}{0.375}} & 0.367 & 0.391 & 0.374 & 0.399 & 0.363 & 0.387 \\
+& 192 & \textbf{\textcolor{red}{0.398}} & \textbf{\textcolor{red}{0.402}} & 0.415 & 0.419 & 0.422 & 0.427 & 0.411 & 0.415 \\
+& 336 & \textbf{\textcolor{red}{0.442}} & \textbf{\textcolor{red}{0.418}} & 0.461 & 0.436 & 0.469 & 0.444 & 0.457 & 0.432 \\
+& 720 & \textbf{\textcolor{red}{0.432}} & \textbf{\textcolor{red}{0.439}} & 0.451 & 0.458 & 0.459 & 0.467 & 0.446 & 0.454 \\
+& Avg & \textbf{\textcolor{red}{0.406}} & \textbf{\textcolor{red}{0.409}} & 0.424 & 0.426 & 0.431 & 0.434 & 0.419 & 0.422 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+从表\ref{tab:chap3-semantic-controls}可以看出，\textbf{Full} 在 ILI、Weather 与 ETTh1 三个数据集的全部预测长度以及平均结果上，均在 MSE 和 MAE 两项指标上优于 \textbf{NoDesc}、\textbf{ShuffleDesc} 与 \textbf{RandEmb}，说明完整语义先验在当前统一骨架中能够稳定带来性能收益。进一步观察三类控制变体的相对排序可以发现，三组数据集上的结果均表现出一致规律：\textbf{Full} 最优，\textbf{RandEmb} 次之，\textbf{NoDesc} 再次，而 \textbf{ShuffleDesc} 最差。这一现象表明，统一骨架中的性能提升既与语义内容本身有关，也与语义描述和变量之间的正确对应关系密切相关。
+
+其中，\textbf{ShuffleDesc} 在三个数据集上均表现最差，说明“错误语义”带来的干扰要明显强于“无语义”带来的信息缺失。以平均结果为例，ILI 上 \textbf{Full} 的 MSE/MAE 为 1.377/0.727，而 \textbf{ShuffleDesc} 退化为 1.458/0.772；Weather 上由 0.227/0.256 退化为 0.241/0.272；ETTh1 上由 0.406/0.409 退化为 0.431/0.434。特别是在 ILI 这类波动较强的数据集上，错误语义先验导致的退化最为明显，说明当语义描述与变量语义不匹配时，跨模态对齐模块不仅无法提供有效补充，反而可能将错误先验注入时序表示，从而削弱预测性能。
+
+\textbf{NoDesc} 的结果整体优于 \textbf{ShuffleDesc}，但仍稳定劣于 \textbf{Full}，说明在缺乏有效语义内容时，模型虽然避免了错误语义干扰，但也失去了变量层面的有用先验信息。另一方面，\textbf{RandEmb} 在三个数据集上均优于 \textbf{NoDesc}，但始终未能达到 \textbf{Full} 的表现。例如在平均结果上，ILI 中 \textbf{RandEmb} 为 1.421/0.751，优于 \textbf{NoDesc} 的 1.437/0.758，但仍落后于 \textbf{Full} 的 1.377/0.727；Weather 中 \textbf{RandEmb} 为 0.235/0.264，优于 \textbf{NoDesc} 的 0.237/0.267；ETTh1 中 \textbf{RandEmb} 为 0.419/0.422，也优于 \textbf{NoDesc} 的 0.424/0.426。这说明仅引入额外的变量级向量通道或随机身份编码，的确可以为统一骨架提供一定辅助信息，但这种收益仍不足以替代真实且正确对齐的语义先验。
+
+综合上述结果，第三章关于语义先验的结论可以进一步细化为以下两点。第一，统一骨架的收益并非仅来自额外嵌入通道，而与语义内容本身密切相关；第二，语义描述与变量之间的正确对应关系同样关键，错误语义先验会显著削弱模型性能。由此可见，第三章所采用的 Qwen3 变量级语义嵌入不仅在编码器选择层面优于 GPT-2，而且在控制变量实验下也表现出更可信的语义有效性，这为后续第四章和第五章继续沿用该语义分支提供了更充分的实验依据。
+
 \subsection{门控注意力机制的有效性验证}
 门控注意力机制的作用主要体现在两个层面：其一，多头跨模态对齐结果的自适应加权能够根据当前样本的跨模态匹配状态动态分配各头贡献，从而抑制冗余头和噪声头；其二，编码层中的门控结构能够在时序建模过程中进一步筛除无关上下文，使保留下来的变量级表示更紧凑。因此，第三章的结论并不局限于“统一骨架可以运行”，而在于说明统一框架、冻结语义先验与门控机制在当前实验设定下能够形成较好的配合，这也为后续两章在频域分支上的进一步增强提供了可复用的基础结构。为了进一步验证门控注意力机制本身的有效性，本文在相同数据集与相同超参数设置下，将统一预测骨架中的门控注意力替换为普通注意力，并保持其余模块不变。这里的“普通注意力”特指去除门控调制后的标准注意力聚合方式，而“门控注意力”则对应第三章、第四章和第五章默认采用的完整统一骨架。表\ref{tab:chap3-gated-vs-plain} 给出了该组对比实验的结果。通过这一比较，可以更直接地评估门控调制在变量级表示压缩与跨模态交互中的增益幅度。
 
