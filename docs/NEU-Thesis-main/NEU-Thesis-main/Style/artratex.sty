@@ -201,27 +201,44 @@
 	% is a new one. mathrm and mathsf can be set by \setmathrm and \setmathsf
 	%\RequirePackage{unicode-math}% another math symbol font configuration
 	%\setmathfont{XITS Math}% a complete symbol set for STIX math fonts
-	\ifartx@windows%
-		\setCJKmainfont[AutoFakeBold,ItalicFont=KaiTi]{SimSun}%
-		\setCJKsansfont[AutoFakeBold]{SimHei}%
-		\setCJKmonofont{FangSong}%
-	\else\ifartx@mac%
-			\setCJKmainfont[ItalicFont=Kaiti SC,BoldItalicFont=Kaiti SC Bold]{Songti SC Light}%
-			\setCJKsansfont{Heiti SC}%
-			\setCJKmonofont{STFangsong}%
-		\else\ifartx@adobe
-				\setCJKmainfont[AutoFakeBold,ItalicFont=AdobeKaitiStd-Regular]{AdobeSongStd-Light}%
-				\setCJKsansfont[AutoFakeBold]{AdobeHeitiStd-Regular}%
-				\setCJKmonofont{AdobeFangsongStd-Regular}%
-			\fi\fi\fi
-		\ifartx@times%
-			% Use fonts that ship with macOS so the template compiles out of the box.
-			\setmainfont[NFSSFamily=entextrm,BoldFont=Times New Roman Bold,ItalicFont=Times New Roman Italic,BoldItalicFont=Times New Roman Bold Italic]{Times New Roman}%
-			\setsansfont[NFSSFamily=entextsf,BoldFont=Helvetica Bold,ItalicFont=Helvetica Oblique,BoldItalicFont=Helvetica Bold Oblique]{Helvetica}%
-	\else
-		\setmainfont[NFSSFamily=entextrm]{FreeSerif}%
-		\setsansfont[NFSSFamily=entextsf]{FreeSerif}%
-	\fi
+		\ifartx@windows%
+			\IfFontExistsTF{SimSun}{%
+				\setCJKmainfont[AutoFakeBold,ItalicFont=KaiTi]{SimSun}%
+				\setCJKsansfont[AutoFakeBold]{SimHei}%
+				\setCJKmonofont{FangSong}%
+			}{%
+				\setCJKmainfont[Path=./,BoldFont=simhei.ttf,ItalicFont=simkai.ttf,BoldItalicFont=simkai.ttf]{simsun.ttc}%
+				\setCJKsansfont[Path=./]{simhei.ttf}%
+				\setCJKmonofont[Path=./]{simfang.ttf}%
+			}%
+		\else\ifartx@mac%
+				\IfFontExistsTF{Songti SC Light}{%
+					\setCJKmainfont[ItalicFont=Kaiti SC,BoldItalicFont=Kaiti SC Bold]{Songti SC Light}%
+					\setCJKsansfont{Heiti SC}%
+					\setCJKmonofont{STFangsong}%
+				}{%
+					\setCJKmainfont[Path=./,BoldFont=simhei.ttf,ItalicFont=simkai.ttf,BoldItalicFont=simkai.ttf]{simsun.ttc}%
+					\setCJKsansfont[Path=./]{simhei.ttf}%
+					\setCJKmonofont[Path=./]{simfang.ttf}%
+				}%
+			\else\ifartx@adobe
+					\setCJKmainfont[AutoFakeBold,ItalicFont=AdobeKaitiStd-Regular]{AdobeSongStd-Light}%
+					\setCJKsansfont[AutoFakeBold]{AdobeHeitiStd-Regular}%
+					\setCJKmonofont{AdobeFangsongStd-Regular}%
+				\fi\fi\fi
+			\ifartx@times%
+				% Prefer platform fonts when available; otherwise fall back to TeX/live fonts.
+				\IfFontExistsTF{Times New Roman}{%
+					\setmainfont[NFSSFamily=entextrm,BoldFont=Times New Roman Bold,ItalicFont=Times New Roman Italic,BoldItalicFont=Times New Roman Bold Italic]{Times New Roman}%
+					\setsansfont[NFSSFamily=entextsf,BoldFont=Helvetica Bold,ItalicFont=Helvetica Oblique,BoldItalicFont=Helvetica Bold Oblique]{Helvetica}%
+				}{%
+					\setmainfont[NFSSFamily=entextrm]{FreeSerif}%
+					\setsansfont[NFSSFamily=entextsf]{FreeSans}%
+				}%
+		\else
+			\setmainfont[NFSSFamily=entextrm]{FreeSerif}%
+			\setsansfont[NFSSFamily=entextsf]{FreeSans}%
+		\fi
 \fi
 
 % \renewcommand*{\songti}{\fontfamily{SimSun}\selectfont}

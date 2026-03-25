@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from einops import rearrange
 from layers.StandardNorm import Normalize
 from layers.Cross_Modal_Align import CrossModal
 
@@ -244,7 +243,21 @@ class TriModal(nn.Module):
         self.residual_alpha = nn.Parameter(torch.ones(self.channel) * 0.5).to(self.device)  
 
         # Transformer decoder
-        self.decoder_layer = nn.TransformerDecoderLayer(d_model = self.channel, nhead = self.head, batch_first=True, norm_first = True, dropout = self.dropout_n).to(self.device)
+        try:
+            self.decoder_layer = nn.TransformerDecoderLayer(
+                d_model=self.channel,
+                nhead=self.head,
+                batch_first=True,
+                norm_first=True,
+                dropout=self.dropout_n,
+            ).to(self.device)
+        except TypeError:
+            self.decoder_layer = nn.TransformerDecoderLayer(
+                d_model=self.channel,
+                nhead=self.head,
+                batch_first=True,
+                dropout=self.dropout_n,
+            ).to(self.device)
         self.decoder = nn.TransformerDecoder(self.decoder_layer, num_layers = self.d_layer).to(self.device)
 
         # Projection

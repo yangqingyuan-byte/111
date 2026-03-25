@@ -1,4 +1,4 @@
 {
     "workbench.activityBar.orientation": "vertical",
-    "specstory.cloudSync.enabled": "always"
+    "specstory.cloudSync.enabled": "never"
 }

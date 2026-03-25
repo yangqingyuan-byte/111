@@ -1,0 +1,239 @@
+<mxfile host="app.diagrams.net" modified="2026-03-24T15:30:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="chap5-frets-framework-detailed" name="FreTS Framework Detailed">
+    <mxGraphModel dx="2532" dy="1318" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="2100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="第五章 融合频域前馈网络的时频域增强模型详细结构图&#10;基于 FreTS 频域前馈网络的 T3Time 详细架构" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=22;" vertex="1" parent="1">
+          <mxGeometry x="540" y="20" width="1120" height="78" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="secA" value="A. 共享输入接口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="670" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="input" value="多变量输入序列&#10;X in R^(B x L x N)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="220" width="200" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="revin" value="RevIN 归一化&#10;X -&gt; X_norm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="330" y="220" width="200" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="reshape" value="维度重排&#10;[B, L, N] -&gt; [B, N, L]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="600" y="220" width="220" height="76" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="secB" value="B. 时域主干分支" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="920" y="120" width="360" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="time" value="时域分支&#10;Linear(L -&gt; C)&#10;+ e 层门控 Transformer 编码器&#10;H_time in R^(B x N x C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="950" y="205" width="280" height="112" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="secC" value="C. FreTS 全局频域前馈分支" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="40" y="370" width="1960" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="freInput" value="频域分支输入&#10;X_norm in R^(B x N x L)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="60" y="470" width="210" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="flatten" value="变量维展开&#10;[B, N, L] -&gt; [B*N, L, 1]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="330" y="470" width="220" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="proj" value="频域初始投影&#10;Linear(1 -&gt; C)&#10;H^(0) in R^(B*N x L x C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="620" y="455" width="240" height="104" as="geometry"/>
+        </mxCell>
+        <mxCell id="rfft" value="RFFT 频谱变换&#10;沿时间维映射到复频域" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="930" y="470" width="210" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="complex" value="复数线性变换&#10;Re/Im 分量分别由可学习矩阵&#10;R, I, b_r, b_i 建模" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="450" width="260" height="116" as="geometry"/>
+        </mxCell>
+        <mxCell id="softshrink" value="稀疏化约束&#10;SoftShrink(lambda)&#10;突出主导频率并抑制噪声谱分量" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="450" width="260" height="116" as="geometry"/>
+        </mxCell>
+        <mxCell id="ifft" value="iRFFT + Dropout&#10;重建增强后的时域序列&#10;H_fre_raw in R^(B*N x L x C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1840" y="450" width="260" height="116" as="geometry"/>
+        </mxCell>
+        <mxCell id="pool" value="Attention Pooling&#10;按变量汇聚全局频谱描述向量" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="730" y="630" width="220" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="reshapeBack" value="形状恢复&#10;[B*N, C] -&gt; [B, N, C]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="635" width="210" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="freEncoder" value="频域编码器&#10;门控 Transformer 编码&#10;H_fre in R^(B x N x C)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="620" width="240" height="106" as="geometry"/>
+        </mxCell>
+        <mxCell id="noteSpectrum" value="核心思想：直接在全局频谱空间进行可学习变换、稀疏筛选与重建&#10;相较于第四章的小波包路线，这里更强调主导周期与长期趋势" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1620" y="620" width="480" height="106" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="secD" value="D. 步长感知融合与语义对齐" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="40" y="820" width="2140" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="horizon" value="预测步长先验&#10;r = pred_len / 100" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="70" y="930" width="170" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="gate" value="步长感知门控融合&#10;G = sigmoid(MLP([H_time; H_fre; r]))&#10;H_tf = H_time + G * H_fre" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="330" y="915" width="340" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="embed" value="冻结 Qwen 变量语义嵌入&#10;embeddings: [B, d_llm, N, 1]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="820" y="930" width="240" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="prompt" value="Prompt Encoder&#10;squeeze + permute + e 层门控 Transformer&#10;H_sem in R^(B x N x d_llm)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="915" width="300" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="cmaHeads" value="4 个 CrossModal 头&#10;Query = H_tf, Key/Value = H_sem" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1510" y="930" width="250" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="dynHeads" value="Adaptive Dynamic Heads CMA&#10;动态聚合多头跨模态结果&#10;H_cma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1830" y="915" width="280" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="residual" value="残差插值融合&#10;H_cross = alpha * H_cma + (1 - alpha) * H_tf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="2180" y="915" width="300" height="108" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="secE" value="E. 解码与预测输出" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1120" width="1540" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="decoder" value="Transformer 解码器&#10;以 H_cross 为 tgt / memory" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="1230" width="240" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="outproj" value="输出映射层&#10;Linear(C -&gt; pred_len)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="1230" width="230" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="permuteOut" value="维度回排&#10;[B, N, H] -&gt; [B, H, N]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1810" y="1235" width="220" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="denorm" value="RevIN 反归一化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="2110" y="1230" width="190" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="output" value="预测输出结果&#10;Y_hat in R^(B x H x N)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="2370" y="1230" width="230" height="86" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="legend" value="颜色图例：&#10;蓝色：输入 / 输出张量&#10;绿色：归一化 / 门控融合 / 输出映射&#10;紫色：FreTS 频域前馈分支&#10;红色：时域编码 / 跨模态对齐&#10;黄色：语义先验 / 辅助信息&#10;灰色虚线：机制说明或对比注释" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1225" width="430" height="175" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="input" target="revin">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="revin" target="reshape">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="reshape" target="time">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="reshape" target="freInput">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="420"/>
+              <mxPoint x="170" y="420"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="freInput" target="flatten">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="flatten" target="proj">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="proj" target="rfft">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="rfft" target="complex">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="complex" target="softshrink">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="softshrink" target="ifft">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="ifft" target="pool">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1970" y="590"/>
+              <mxPoint x="1970" y="750"/>
+              <mxPoint x="840" y="750"/>
+              <mxPoint x="840" y="716"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="pool" target="reshapeBack">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="reshapeBack" target="freEncoder">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="time" target="gate">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1090" y="360"/>
+              <mxPoint x="1090" y="880"/>
+              <mxPoint x="500" y="880"/>
+              <mxPoint x="500" y="915"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="freEncoder" target="gate">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1400" y="780"/>
+              <mxPoint x="1400" y="840"/>
+              <mxPoint x="580" y="840"/>
+              <mxPoint x="580" y="915"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="horizon" target="gate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="embed" target="prompt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="gate" target="cmaHeads">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="prompt" target="cmaHeads">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="cmaHeads" target="dynHeads">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="dynHeads" target="residual">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="gate" target="residual">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="1065"/>
+              <mxPoint x="670" y="1090"/>
+              <mxPoint x="2220" y="1090"/>
+              <mxPoint x="2220" y="970"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="residual" target="decoder">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2330" y="1080"/>
+              <mxPoint x="2330" y="1273"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="decoder" target="outproj">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="outproj" target="permuteOut">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="permuteOut" target="denorm">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="denorm" target="output">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

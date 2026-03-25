@@ -192,7 +192,22 @@ class TriModalFreTSGatedQwenFusionExp(nn.Module):
         self.residual_alpha = nn.Parameter(torch.ones(self.channel) * 0.5).to(self.device)
         
         # 解码器
-        self.decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(d_model=self.channel, nhead=head, batch_first=True, norm_first=True, dropout=dropout_n), num_layers=d_layer).to(self.device)
+        try:
+            decoder_layer = nn.TransformerDecoderLayer(
+                d_model=self.channel,
+                nhead=head,
+                batch_first=True,
+                norm_first=True,
+                dropout=dropout_n,
+            )
+        except TypeError:
+            decoder_layer = nn.TransformerDecoderLayer(
+                d_model=self.channel,
+                nhead=head,
+                batch_first=True,
+                dropout=dropout_n,
+            )
+        self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=d_layer).to(self.device)
         self.c_to_length = nn.Linear(self.channel, self.pred_len, bias=True).to(self.device)
 
     def forward(self, input_data, input_data_mark, embeddings):

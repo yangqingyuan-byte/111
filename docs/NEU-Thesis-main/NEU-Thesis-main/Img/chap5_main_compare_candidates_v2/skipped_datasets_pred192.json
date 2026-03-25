@@ -1,0 +1,6 @@
+[
+  {
+    "dataset": "ETTh2",
+    "reason": "未找到匹配日志: dataset=ETTh2, pred_len=192, pattern=T3Time, match_mode=exact"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "dataset": "ETTh2",
+    "reason": "未找到匹配日志: dataset=ETTh2, pred_len=192, pattern=T3Time, match_mode=exact"
+  },
+  {
+    "dataset": "ETTm1",
+    "reason": "未找到匹配日志: dataset=ETTm1, pred_len=192, pattern=T3Time, match_mode=exact"
+  },
+  {
+    "dataset": "ETTm2",
+    "reason": "未找到匹配日志: dataset=ETTm2, pred_len=192, pattern=T3Time, match_mode=exact"
+  },
+  {
+    "dataset": "Weather",
+    "reason": "未找到匹配日志: dataset=Weather, pred_len=192, pattern=T3Time, match_mode=exact"
+  },
+  {
+    "dataset": "ECL",
+    "reason": "未找到匹配日志: dataset=ECL, pred_len=192, pattern=T3Time, match_mode=exact"
+  },
+  {
+    "dataset": "exchange_rate",
+    "reason": "未找到匹配日志: dataset=exchange_rate, pred_len=192, pattern=T3Time, match_mode=exact"
+  }
+]

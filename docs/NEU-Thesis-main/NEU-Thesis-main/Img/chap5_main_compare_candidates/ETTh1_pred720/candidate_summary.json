@@ -1,0 +1,22 @@
+[
+  {
+    "rank": 1,
+    "dataset": "ETTh1",
+    "pred_len": 720,
+    "feature_name": "HUFL",
+    "sample_idx": 29,
+    "var_idx": 0,
+    "score": 10.007993,
+    "t3time_mae": 7.535484,
+    "ours_mae": 7.214126,
+    "mae_gain": 0.321358,
+    "t3time_mse": 86.266502,
+    "ours_mse": 80.224678,
+    "mse_gain": 6.041824,
+    "truth_std": 7.594074,
+    "truth_span": 33.289001,
+    "smooth_gain": 0.102776,
+    "png_path": "/root/0/T3Time/docs/NEU-Thesis-main/NEU-Thesis-main/Img/chap5_main_compare_candidates/ETTh1_pred720/rank01_sample0029_var00_HUFL.png",
+    "pdf_path": "/root/0/T3Time/docs/NEU-Thesis-main/NEU-Thesis-main/Img/chap5_main_compare_candidates/ETTh1_pred720/rank01_sample0029_var00_HUFL.pdf"
+  }
+]
