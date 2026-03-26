@@ -43,14 +43,15 @@ for cmd in xelatex bibtex; do
     fi
 done
 
-# This template ships with a Windows font preset by default.
-# On macOS we swap it once so XeLaTeX uses the system CJK fonts.
-if grep -q 'fontset=windows' "$MAIN_TEX"; then
+# Normalize the template font preset for macOS. Some copies use `windows`,
+# while others use `fandol`, which makes `artratex.sty` fall back to
+# FreeSerif/FreeSans and can drop Latin text on macOS.
+if grep -Eq 'fontset=(windows|fandol|adobe)' "$MAIN_TEX"; then
     if [[ ! -f "$BACKUP_TEX" ]]; then
         cp "$MAIN_TEX" "$BACKUP_TEX"
     fi
-    perl -0pi -e 's/fontset=windows/fontset=mac/g' "$MAIN_TEX"
-    echo "$LOG_PREFIX Switched Thesis.tex fontset from windows to mac."
+    perl -0pi -e 's/fontset=(windows|fandol|adobe)/fontset=mac/g' "$MAIN_TEX"
+    echo "$LOG_PREFIX Normalized Thesis.tex fontset to mac."
 fi
 
 # Some copies of this template point to Tinos/Arimo, which are often missing on macOS.
