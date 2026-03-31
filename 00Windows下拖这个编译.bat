@@ -7,10 +7,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%build_thesis_fu
 if errorlevel 1 (
     echo.
     echo Build failed.
-    pause
     exit /b 1
 )
 
 echo.
 echo Build finished successfully.
-pause

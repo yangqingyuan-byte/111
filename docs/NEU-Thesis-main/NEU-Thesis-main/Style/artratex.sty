@@ -206,10 +206,15 @@
 				\setCJKmainfont[AutoFakeBold,ItalicFont=KaiTi]{SimSun}%
 				\setCJKsansfont[AutoFakeBold]{SimHei}%
 				\setCJKmonofont{FangSong}%
+				% ctex's default zhsong family on Windows does not declare a bold face,
+				% so \songti\bfseries falls back to regular SimSun. Define a local
+				% fake-bold Songti family to avoid warnings and preserve the Songti look.
+				\setCJKfamilyfont{zhsong}[AutoFakeBold,ItalicFont=KaiTi]{SimSun}%
 			}{%
 				\setCJKmainfont[Path=./,BoldFont=simhei.ttf,ItalicFont=simkai.ttf,BoldItalicFont=simkai.ttf]{simsun.ttc}%
 				\setCJKsansfont[Path=./]{simhei.ttf}%
 				\setCJKmonofont[Path=./]{simfang.ttf}%
+				\setCJKfamilyfont{zhsong}[Path=./,AutoFakeBold,ItalicFont=simkai.ttf,BoldItalicFont=simkai.ttf]{simsun.ttc}%
 			}%
 		\else\ifartx@mac%
 				\IfFontExistsTF{Songti SC Light}{%
@@ -230,7 +235,15 @@
 				% Prefer platform fonts when available; otherwise fall back to TeX/live fonts.
 				\IfFontExistsTF{Times New Roman}{%
 					\setmainfont[NFSSFamily=entextrm,BoldFont=Times New Roman Bold,ItalicFont=Times New Roman Italic,BoldItalicFont=Times New Roman Bold Italic]{Times New Roman}%
-					\setsansfont[NFSSFamily=entextsf,BoldFont=Helvetica Bold,ItalicFont=Helvetica Oblique,BoldItalicFont=Helvetica Bold Oblique]{Helvetica}%
+					\IfFontExistsTF{Arial}{%
+						\setsansfont[NFSSFamily=entextsf,BoldFont=Arial Bold,ItalicFont=Arial Italic,BoldItalicFont=Arial Bold Italic]{Arial}%
+					}{%
+						\IfFontExistsTF{Helvetica}{%
+							\setsansfont[NFSSFamily=entextsf,BoldFont=Helvetica Bold,ItalicFont=Helvetica Oblique,BoldItalicFont=Helvetica Bold Oblique]{Helvetica}%
+						}{%
+							\setsansfont[NFSSFamily=entextsf]{FreeSans}%
+						}%
+					}%
 				}{%
 					\setmainfont[NFSSFamily=entextrm]{FreeSerif}%
 					\setsansfont[NFSSFamily=entextsf]{FreeSans}%

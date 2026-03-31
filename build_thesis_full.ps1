@@ -4,6 +4,7 @@ Set-StrictMode -Version Latest
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $thesisDir = Join-Path $scriptDir "docs\NEU-Thesis-main\NEU-Thesis-main"
 $mainTex = "Thesis.tex"
+$mainTexPath = Join-Path $thesisDir $mainTex
 $outputDir = "Tmp"
 $outputPath = Join-Path $thesisDir $outputDir
 
@@ -20,6 +21,18 @@ if (-not (Get-Command bibtex -ErrorAction SilentlyContinue)) {
 }
 
 New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
+
+# Keep the thesis template aligned with Windows system fonts. The macOS helper
+# script rewrites this option to `fontset=mac`, which breaks XeLaTeX on Windows
+# because fonts such as STHeiti do not exist here.
+$mainTexContent = Get-Content -LiteralPath $mainTexPath -Raw
+if ($mainTexContent -match 'fontset=(mac|fandol|adobe)') {
+    $updatedContent = $mainTexContent -replace 'fontset=(mac|fandol|adobe)', 'fontset=windows'
+    if ($updatedContent -ne $mainTexContent) {
+        Set-Content -LiteralPath $mainTexPath -Value $updatedContent -Encoding UTF8
+        Write-Host "Normalized Thesis.tex fontset to windows."
+    }
+}
 
 Push-Location $thesisDir
 try {
