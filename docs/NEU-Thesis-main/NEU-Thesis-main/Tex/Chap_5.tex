@@ -278,22 +278,22 @@ Dropout & 0.1 \\
 \begin{table}[!htbp]
 \centering
 \small
-\setlength{\tabcolsep}{4.2pt}
-\renewcommand{\arraystretch}{1.03}
+\setlength{\tabcolsep}{2.4pt}
+\renewcommand{\arraystretch}{0.98}
 \bicaption{ILI、Weather 与 ETTh1 数据集上的统一模块消融结果}{Unified module ablation results on the ILI, Weather and ETTh1 datasets}
 \label{tab:chap5-ablation-unified}
-\resizebox{\textwidth}{!}{
+\resizebox{0.90\textwidth}{!}{
 \begin{tabular}{c|c|c|c|c|c|c|c|c}
 \toprule
 \multirow{2}{*}{\textbf{数据集}} &
 \multirow{2}{*}{\textbf{预测长度}} &
 \textbf{Full} &
-\textbf{去除FreTS} &
-\textbf{去除稀疏化} &
-\textbf{去除门控融合} &
-\textbf{静态加权} &
-\textbf{跨注意力} &
-\textbf{混合融合} \\
+\makecell{\textbf{去除}\\\textbf{FreTS}} &
+\makecell{\textbf{去除}\\\textbf{稀疏化}} &
+\makecell{\textbf{去除}\\\textbf{门控融合}} &
+\makecell{\textbf{静态}\\\textbf{加权}} &
+\makecell{\textbf{跨}\\\textbf{注意力}} &
+\makecell{\textbf{混合}\\\textbf{融合}} \\
 \cmidrule(lr){3-9}
 & & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} & \textbf{MSE/MAE} \\
 \midrule

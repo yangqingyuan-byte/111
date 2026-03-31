@@ -97,7 +97,11 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-PROJECT_ROOT = "/root/0/T3Time"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.environ.get(
+    "T3TIME_PROJECT_ROOT",
+    os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..")),
+)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
@@ -135,6 +139,15 @@ COLOR_BASELINE = "#1F77B4"
 COLOR_OURS = "#D62728"
 COLOR_FORECAST_BG = "#F7F4EE"
 
+WEATHER_FEATURE_NAME_FIXES = {
+    "SWDR (W/m锟?)": "SWDR (W/m²)",
+    "SWDR (W/m�)": "SWDR (W/m²)",
+    "PAR (锟絤ol/m锟?s)": "PAR (μmol/m²/s)",
+    "PAR (�mol/m�/s)": "PAR (μmol/m²/s)",
+    "max. PAR (锟絤ol/m锟?s)": "max. PAR (μmol/m²/s)",
+    "max. PAR (�mol/m�/s)": "max. PAR (μmol/m²/s)",
+}
+
 
 def set_seed(seed: int) -> None:
     random.seed(seed)
@@ -150,11 +163,34 @@ def normalize_dataset_name(dataset: str) -> str:
     return DATASET_ALIASES.get(key.lower(), key)
 
 
+def normalize_feature_name(feature_name: str) -> str:
+    fixed = WEATHER_FEATURE_NAME_FIXES.get(feature_name)
+    if fixed is not None:
+        return fixed
+    if feature_name.startswith("SWDR") and "W/m" in feature_name:
+        return "SWDR (W/m²)"
+    if "PAR" in feature_name and "/s" in feature_name:
+        return "max. PAR (μmol/m²/s)" if feature_name.startswith("max.") else "PAR (μmol/m²/s)"
+    return feature_name
+
+
+def make_safe_feature_name(feature_name: str) -> str:
+    safe = normalize_feature_name(feature_name)
+    for src, dst in {
+        "μ": "u",
+        "²": "2",
+        "/": "_",
+        " ": "_",
+    }.items():
+        safe = safe.replace(src, dst)
+    return safe
+
+
 def feature_names(dataset: str) -> List[str]:
     dataset = normalize_dataset_name(dataset)
     csv_path = os.path.join(PROJECT_ROOT, "dataset", f"{dataset}.csv")
     df = pd.read_csv(csv_path)
-    return list(df.columns[1:])
+    return [normalize_feature_name(col) for col in list(df.columns[1:])]
 
 
 def infer_num_nodes(dataset: str) -> int:
@@ -1418,6 +1454,7 @@ def plot_candidate(
     ours_label: str,
     output_dir: str,
 ) -> Tuple[str, str]:
+    feature_name = normalize_feature_name(feature_name)
     sample_idx = candidate["sample_idx"]
     var_idx = candidate["var_idx"]
     history = ours["inputs"][sample_idx, :, var_idx]
@@ -1458,7 +1495,7 @@ def plot_candidate(
     plt.legend(frameon=False, fontsize=10, ncol=4, loc="upper right")
     plt.tight_layout()
 
-    safe_feature_name = feature_name.replace("/", "_").replace(" ", "_")
+    safe_feature_name = make_safe_feature_name(feature_name)
     file_stub = (
         f"rank{rank:02d}_b{candidate['baseline_seed']}_o{candidate['ours_seed']}_"
         f"sample{sample_idx:04d}_var{var_idx:02d}_{safe_feature_name}"
